@@ -84,6 +84,9 @@ export function createViewer(container, proxyConfig = null) {
   window.history.replaceState({ app: false }, '');
   window.addEventListener('popstate', onRoute);
 
+  store.commit(Mutations.SET_REMOTE_ENDPOINT, 'ws://localhost:8080/ws');
+  window.a = () => store.dispatch(Actions.UPLOAD_DATA);
+
   return {
     processURLArgs() {
       const { name, url, type } = vtkURLExtract.extractURLParameters();
