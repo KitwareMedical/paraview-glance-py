@@ -11,6 +11,7 @@ import global from 'paraview-glance/src/stores/globalSettings';
 import files from 'paraview-glance/src/stores/fileLoader';
 import screenshots from 'paraview-glance/src/stores/screenshots';
 import views from 'paraview-glance/src/stores/views';
+import remote from 'paraview-glance/src/stores/remote';
 import { Actions, Mutations } from 'paraview-glance/src/stores/types';
 
 // http://jsperf.com/typeofvar
@@ -67,6 +68,7 @@ function createStore(proxyManager = null) {
       files,
       screenshots,
       views,
+      remote,
     },
     mutations: {
       SHOW_LANDING(state) {
