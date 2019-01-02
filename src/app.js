@@ -84,8 +84,15 @@ export function createViewer(container, proxyConfig = null) {
   window.history.replaceState({ app: false }, '');
   window.addEventListener('popstate', onRoute);
 
-  store.commit(Mutations.SET_REMOTE_ENDPOINT, 'ws://localhost:8080/ws');
-  window.a = () => store.dispatch(Actions.UPLOAD_DATA);
+  store.dispatch(Actions.CONNECT, 'ws://localhost:8080/ws').then(() => {
+    // NOTE: this subscription isn't cleared when the server disconnects
+    proxyManager.onProxyRegistrationChange((info) => {
+      if (info.action === 'register' && info.proxyGroup === 'Sources') {
+        const ds = info.proxy.getDataset();
+        store.dispatch(Actions.UPLOAD_DATA, ds);
+      }
+    });
+  });
 
   return {
     processURLArgs() {
