@@ -1,9 +1,14 @@
 import WebsocketConnection from 'paraview-glance/wslink/src/WebsocketConnection';
 
 let ws = null;
+let wsPromise = null;
 
 function connect(endpoint) {
-  return new Promise((resolve, reject) => {
+  if (wsPromise) {
+    return wsPromise;
+  }
+
+  wsPromise = new Promise((resolve, reject) => {
     if (ws) {
       resolve(ws.getSession());
     } else if (endpoint) {
@@ -19,6 +24,12 @@ function connect(endpoint) {
       reject(new Error('empty endpoint'));
     }
   });
+
+  wsPromise.finally(() => {
+    wsPromise = null;
+  });
+
+  return wsPromise;
 }
 
 /**
