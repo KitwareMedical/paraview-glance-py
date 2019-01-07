@@ -18,6 +18,7 @@ import App from 'paraview-glance/src/components/core/App';
 import Config from 'paraview-glance/src/config';
 import createStore from 'paraview-glance/src/stores';
 import { Actions, Mutations } from 'paraview-glance/src/stores/types';
+import Remote from 'paraview-glance/src/remote';
 
 // Expose IO API to Glance global object
 export const {
@@ -50,7 +51,9 @@ export function createViewer(container, proxyConfig = null) {
   const proxyConfiguration = proxyConfig || activeProxyConfig || Config.Proxy;
   const proxyManager = vtkProxyManager.newInstance({ proxyConfiguration });
 
-  const store = createStore(proxyManager);
+  const server = Remote.connect('ws://localhost:8080/ws');
+
+  const store = createStore(proxyManager, server);
 
   /* eslint-disable no-new */
   new Vue({
@@ -84,12 +87,12 @@ export function createViewer(container, proxyConfig = null) {
   window.history.replaceState({ app: false }, '');
   window.addEventListener('popstate', onRoute);
 
-  store.dispatch(Actions.CONNECT, 'ws://localhost:8080/ws').then(() => {
+  server.onready(() => {
     // NOTE: this subscription isn't cleared when the server disconnects
     proxyManager.onProxyRegistrationChange((info) => {
       if (info.action === 'register' && info.proxyGroup === 'Sources') {
         const ds = info.proxy.getDataset();
-        store.dispatch(Actions.UPLOAD_DATA, ds);
+        server.attachVtkObj(ds).then((obj) => server.call('upload', obj));
       }
     });
   });
