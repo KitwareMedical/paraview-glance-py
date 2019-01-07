@@ -11,7 +11,6 @@ import global from 'paraview-glance/src/stores/globalSettings';
 import files from 'paraview-glance/src/stores/fileLoader';
 import screenshots from 'paraview-glance/src/stores/screenshots';
 import views from 'paraview-glance/src/stores/views';
-import remote from 'paraview-glance/src/stores/remote';
 import { Actions, Mutations } from 'paraview-glance/src/stores/types';
 
 // http://jsperf.com/typeofvar
@@ -47,7 +46,7 @@ function reduceState(state) {
   };
 }
 
-function createStore(proxyManager = null) {
+function createStore(proxyManager, remote) {
   let pxm = proxyManager;
   if (!proxyManager) {
     pxm = vtkProxyManager.newInstance({
@@ -58,6 +57,7 @@ function createStore(proxyManager = null) {
   return new Vuex.Store({
     state: {
       proxyManager: pxm,
+      remote,
       route: 'landing', // valid values: landing, app
       savingStateName: null,
       loadingState: false,
@@ -68,7 +68,6 @@ function createStore(proxyManager = null) {
       files,
       screenshots,
       views,
-      remote,
     },
     mutations: {
       SHOW_LANDING(state) {
