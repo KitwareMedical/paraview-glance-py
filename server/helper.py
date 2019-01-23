@@ -13,7 +13,6 @@ def print_matrix(itkmat, size=(3, 3)):
             sys.stdout.write('{} '.format(itkmat(i, j)))
         sys.stdout.write('\n')
 
-
 # modified from: https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/itkwidgets/trait_types.py#L49
 def _itk_image_to_type(itkimage):
     component_str = repr(itkimage).split('itkImagePython.')[1].split(';')[0][8:]
@@ -68,7 +67,6 @@ def _itk_image_to_type(itkimage):
         'D':'Float64Array',
         'B':'Uint8Array'
         }
-    print('type:', mangle)
     return _python_to_js[mangle]
 
 def itk_to_vtkjs_image(itk_image, name='Default Name'):
