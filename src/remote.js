@@ -11,12 +11,12 @@ function setCallback(arr, cb) {
 }
 
 /**
- * Serializes a vtk object and converts all vtkDataArrays into
- * a wslink binary attachment.
+ * Walks an object tree and converts any vtkDataArrays to
+ * a wslink attachment.
+ *
+ * This mutates the given object.
  */
-function extractAttachments(vtkObj, session) {
-  const state = vtkObj.getState();
-
+function extractVtkAttachments(obj, session) {
   function extract(o) {
     if (o === null || o === undefined) {
       return;
@@ -34,8 +34,8 @@ function extractAttachments(vtkObj, session) {
     }
   }
 
-  extract(state);
-  return state;
+  extract(obj);
+  return obj;
 }
 
 function connect(endpoint) {
@@ -43,6 +43,9 @@ function connect(endpoint) {
     ready: [],
     error: [],
   };
+
+  // obj -> { guid, dirty }
+  const objDir = new WeakMap();
 
   // a promise holding our session
   const pSession = new Promise((resolve, reject) => {
@@ -57,17 +60,60 @@ function connect(endpoint) {
     .then((session) => cbs.ready.forEach((cb) => cb(session)))
     .catch((error) => cbs.error.forEach((cb) => cb(error)));
 
-  return {
+  const api = {
     onready: (cb) => setCallback(cbs.ready, cb),
     onerror: (cb) => setCallback(cbs.error, cb),
     call: (rpcEndpoint, ...args) =>
-      pSession.then((session) => session.call(rpcEndpoint, args)),
-    attachVtkObj: (obj) =>
-      pSession.then((session) => extractAttachments(obj, session)),
+      pSession.then((session) => {
+        const newArgs = Array(args.length);
+        let uploadPromise = Promise.resolve();
+        for (let i = 0; i < args.length; i++) {
+          const arg = args[i];
+          if (arg && arg.isA && arg.isA('vtkObject')) {
+            let guid = null;
+            let dirty = false;
+            if (objDir.has(arg)) {
+              const state = objDir.get(arg);
+              guid = state.guid;
+              dirty = state.dirty;
+            }
+
+            if (objDir.has(arg) && !dirty) {
+              newArgs[i] = {
+                __objguid__: guid,
+              };
+            } else {
+              const serialized = arg.getState();
+              extractVtkAttachments(serialized, session);
+              uploadPromise = uploadPromise
+                .then(() => api.call('objdir_put', serialized, guid))
+                .then((newGuid) => {
+                  newArgs[i] = {
+                    __objguid__: newGuid,
+                  };
+                  objDir.set(arg, {
+                    guid: newGuid,
+                    dirty: false,
+                  });
+                });
+            }
+          } else {
+            newArgs[i] = arg;
+          }
+        }
+        return uploadPromise.then(() => session.call(rpcEndpoint, newArgs));
+      }),
+    markDirty(targetObject) {
+      if (targetObject && objDir.has(targetObject)) {
+        const state = objDir.get(targetObject);
+        objDir.set(targetObject, Object.assign(state, { dirty: true }));
+      }
+    },
   };
+
+  return api;
 }
 
 export default {
   connect,
-  extractAttachments,
 };
