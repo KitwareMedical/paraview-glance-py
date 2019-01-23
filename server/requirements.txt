@@ -1,0 +1,2 @@
+itk==5.0b3
+git+git://github.com/floryst/wslink@js_send_binary#egg=wslink&subdirectory=python
