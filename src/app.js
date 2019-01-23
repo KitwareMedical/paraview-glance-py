@@ -84,18 +84,9 @@ export function createViewer(container, proxyConfig = null) {
       }
     }
   );
+
   window.history.replaceState({ app: false }, '');
   window.addEventListener('popstate', onRoute);
-
-  server.onready(() => {
-    // NOTE: this subscription isn't cleared when the server disconnects
-    proxyManager.onProxyRegistrationChange((info) => {
-      if (info.action === 'register' && info.proxyGroup === 'Sources') {
-        const ds = info.proxy.getDataset();
-        server.attachVtkObj(ds).then((obj) => server.call('upload', obj));
-      }
-    });
-  });
 
   return {
     processURLArgs() {
