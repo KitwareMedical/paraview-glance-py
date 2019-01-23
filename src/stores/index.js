@@ -46,7 +46,7 @@ function reduceState(state) {
   };
 }
 
-function createStore(proxyManager = null) {
+function createStore(proxyManager, remote) {
   let pxm = proxyManager;
   if (!proxyManager) {
     pxm = vtkProxyManager.newInstance({
@@ -57,6 +57,7 @@ function createStore(proxyManager = null) {
   return new Vuex.Store({
     state: {
       proxyManager: pxm,
+      remote,
       route: 'landing', // valid values: landing, app
       savingStateName: null,
       loadingState: false,

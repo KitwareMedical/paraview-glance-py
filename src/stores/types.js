@@ -27,6 +27,9 @@ export const Actions = objEnum([
 
   // screenshots
   'TAKE_SCREENSHOT',
+
+  'CONNECT',
+  'UPLOAD_DATA',
 ]);
 
 export const Getters = objEnum([
