@@ -19,10 +19,12 @@ Running
 
 One terminal:
 ```
+$ cd glance-vessels/
 $ npm run dev
 ```
 
 Other terminal:
 ```
+$ cd glance-vessels/server
 $ python server.py
 ```
