@@ -30,3 +30,5 @@ Other terminal:
 $ cd glance-vessels/server
 $ python server.py
 ```
+
+Finally, visit `http://localhost:9999/` to view the webapp. If you get a blank screen, try clearing cache and then refreshing.
