@@ -1,0 +1,4 @@
+[submodule "wslink"]
+	path = wslink
+	url = https://github.com/floryst/wslink.git
+	branch = js_send_binary

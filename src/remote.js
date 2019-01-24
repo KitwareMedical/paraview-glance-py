@@ -1,4 +1,4 @@
-import WebsocketConnection from 'paraview-glance/wslink/src/WebsocketConnection';
+import WebsocketConnection from 'paraview-glance/wslink/js/src/WebsocketConnection';
 
 function setCallback(arr, cb) {
   arr.push(cb);
