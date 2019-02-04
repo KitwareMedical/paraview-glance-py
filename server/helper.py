@@ -13,6 +13,19 @@ def print_matrix(itkmat, size=(3, 3)):
             sys.stdout.write('{} '.format(itkmat(i, j)))
         sys.stdout.write('\n')
 
+def itk_pos_to_array(itkpos):
+    return [itkpos.GetElement(i) for i in range(3)]
+
+def spatial_object_pt_to_radius(pt):
+    #forgive me
+    return float(str(pt).split("R: ")[1].split("\n")[0])
+
+
+def itk_image_dimension(itk_image):
+    return len(itk_image.GetLargestPossibleRegion().GetSize())
+def itk_pixel_type(itkimage):
+    return getattr(itk, "".join([char for char in repr(itkimage).split('itkImagePython.')[1].split(';')[0][8:] if char.isupper()]))
+
 # modified from: https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/itkwidgets/trait_types.py#L49
 def _itk_image_to_type(itkimage):
     component_str = repr(itkimage).split('itkImagePython.')[1].split(';')[0][8:]
