@@ -153,7 +153,7 @@ export default {
 
           this.remote
             .call('segment', dataset, picker.getPointIJK())
-            .then((centerline) => {
+            .then((centerlines) => {
               if (!this.resultSources.has(dataset)) {
                 const source = this.proxyManager.createProxy(
                   'Sources',
@@ -164,12 +164,15 @@ export default {
                 );
                 this.resultSources.set(dataset, source);
               }
+              var centerline;
+              for (centerline of centerlines){
+                const source = this.resultSources.get(dataset);
+                if (source !== undefined) {
+                  const tube = centerlineToTube(centerline);
+                  source.setInputData(tube);
 
-              const source = this.resultSources.get(dataset);
-              if (source !== undefined) {
-                const tube = centerlineToTube(centerline);
-                source.setInputData(tube);
-                this.proxyManager.createRepresentationInAllViews(source);
+                  this.proxyManager.createRepresentationInAllViews(source);
+                }
               }
             });
           console.log(picker.getPointIJK());

@@ -41,24 +41,40 @@ class Protocol(helper.ObjectProtocol):
     @rpc('segment')
     @helper.objdir_wrap
     def segment(self, image, point):
-   
-        itk_image = helper.vtkjs_to_itk_image(image)
+        
 
-        itk_image = itk.CastImageFilter[type(itk_image), itk.Image[itk.F, 3]].New()(itk_image)
+        if not 'serverData' in image:
+            itk_image = helper.vtkjs_to_itk_image(image)
+
+            if itk_image is None:
+                raise Exception("segment called with invalid image")
+
+            itk_image = itk.CastImageFilter[type(itk_image), itk.Image[itk.F, 3]].New()(itk_image)
+
+            tuber = itk.TubeTK.SegmentTubes[type(itk_image)].New()
+
+            tuber.SetInputImage(itk_image)
+            
+            image["serverData"] = {
+                "itk_image":itk_image,
+                "tuber":tuber,
+                "tubes":[]
+            }
+            print("initialized")
 
         print('segment at:', point)
 
-        tuber = itk.TubeTK.SegmentTubes[type(itk_image)].New()
+        atube = image["serverData"]["tuber"].ExtractTube(point, 0, True)
+        if atube:
+            image["serverData"]["tuber"].AddTube(atube)
+            tube_py = []
+            for j in range(atube.GetNumberOfPoints()):
+                pt = atube.GetPoint(j)
+                pos = helper.itk_pos_to_array(pt.GetPosition())
+                radius = helper.spatial_object_pt_to_radius(pt)
+                tube_py.append({'point': pos, 'radius': radius},)
+            image["serverData"]["tubes"].append(tube_py)
 
-        tuber.SetInputImage(itk_image)
-        atube = tuber.ExtractTube(point, 0, True)
-        
-        tube_py = []
-        for j in range(atube.GetNumberOfPoints()):
-            pt = atube.GetPoint(j)
-            pos = helper.itk_pos_to_array(pt.GetPosition())
-            radius = helper.spatial_object_pt_to_radius(pt)
-            tube_py.append({'point': pos, 'radius': radius},)
 
-        return tube_py
+        return image["serverData"]["tubes"]
       
