@@ -1,7 +1,6 @@
 import { mapState } from 'vuex';
-import vtk from 'vtk.js/Sources/vtk';
+import macro from 'vtk.js/Sources/macro';
 import vtkPicker from 'vtk.js/Sources/Rendering/Core/PointPicker';
-
 import vtkDataArray from 'vtk.js/Sources/Common/Core/DataArray';
 import vtkPoints from 'vtk.js/Sources/Common/Core/Points';
 import vtkPolyData from 'vtk.js/Sources/Common/DataModel/PolyData';
@@ -9,45 +8,18 @@ import vtkTubeFilter from 'vtk.js/Sources/Filters/General/TubeFilter';
 import { VaryRadius } from 'vtk.js/Sources/Filters/General/TubeFilter/Constants';
 import { VtkDataTypes } from 'vtk.js/Sources/Common/Core/DataArray/Constants';
 
-/**
- * handler should return an "unsubscribe" for when a view is destructed.
- */
-function listenForEachView(pxm, handler) {
-  const subs = [];
-  subs.push(
-    pxm.onProxyRegistrationChange((info) => {
-      if (info.proxyGroup === 'Views') {
-        if (info.action === 'register') {
-          subs.push({
-            view: info.proxy,
-            unsubscribe: handler(info.proxy),
-          });
-        } else if (info.action === 'unregister') {
-          for (let i = 0; i < subs.length; i++) {
-            if (subs[i].view === info.proxy) {
-              subs[i].unsubscribe();
-              subs.splice(i, 1);
-              break;
-            }
-          }
-        }
-      }
-    })
-  );
+import utils from 'paraview-glance/src/utils';
 
-  return () => {
-    while (subs.length) {
-      subs.pop().unsubscribe();
-    }
-  };
-}
+const { forAllViews } = utils;
 
-function onClick(interactor, cb) {
+function onClick(interactor, button, cb) {
+  const pressFn = `on${macro.capitalize(button)}ButtonPress`;
+  const releaseFn = `on${macro.capitalize(button)}ButtonRelease`;
   let pressTime = 0;
-  const pressSub = interactor.onLeftButtonPress(() => {
+  const pressSub = interactor[pressFn](() => {
     pressTime = +new Date();
   });
-  const releaseSub = interactor.onLeftButtonRelease((ev) => {
+  const releaseSub = interactor[releaseFn]((ev) => {
     if (+new Date() - pressTime < 250) {
       cb(ev);
     }
@@ -107,10 +79,14 @@ function centerlineToTube(centerline) {
 const picker = vtkPicker.newInstance();
 
 export default {
-  name: 'DataTools',
+  name: 'SegmentTools',
   data() {
     return {
       resultSources: new WeakMap(),
+      menuX: 0,
+      menuY: 0,
+      contextMenu: false,
+      segmentScale: 5,
     };
   },
   computed: mapState(['proxyManager', 'remote']),
@@ -118,13 +94,13 @@ export default {
     run() {
       const activeSource = this.proxyManager.getActiveSource();
       const dataset = activeSource.getDataset();
-      this.remote.call('median_filter', dataset, 3).then((vtkResult) => {
+      this.remote.call('median_filter', dataset, 2).then(([vtkResult]) => {
         if (!this.resultSources.has(dataset)) {
           const source = this.proxyManager.createProxy(
             'Sources',
             'TrivialProducer',
             {
-              name: 'name', // TODO vtkResult.name
+              name: '<div>', // TODO vtkResult.name
             }
           );
           this.resultSources.set(dataset, source);
@@ -140,19 +116,25 @@ export default {
     },
   },
   mounted() {
-    listenForEachView(this.proxyManager, (view) => {
+    // TODO unsub
+    forAllViews(this.proxyManager, (view) => {
       if (view.isA('vtkView2DProxy')) {
         const interactor = view.getRenderWindow().getInteractor();
         interactor.setPicker(picker);
-        onClick(interactor, (ev) => {
-          const point = [ev.position.x, ev.position.y, 10];
+
+        // left mouse click
+        // TODO unsub
+        onClick(interactor, 'left', (ev) => {
+          const point = [ev.position.x, ev.position.y, 0];
           picker.pick(point, ev.pokedRenderer);
 
+          // TODO use selected source
           const activeSource = this.proxyManager.getActiveSource();
           const dataset = activeSource.getDataset();
 
           this.remote
             .call('segment', dataset, picker.getPointIJK())
+            // TODO receive whole tube set
             .then((centerline) => {
               if (!this.resultSources.has(dataset)) {
                 const source = this.proxyManager.createProxy(
@@ -173,6 +155,20 @@ export default {
               }
             });
           console.log(picker.getPointIJK());
+        });
+
+        // right mouse click
+        // TODO unsub
+        onClick(interactor, 'right', (ev) => {
+          const point = [ev.position.x, ev.position.y, 0];
+          picker.pick(point, ev.pokedRenderer);
+
+          // TODO use selected source
+          const activeSource = this.proxyManager.getActiveSource();
+          const dataset = activeSource.getDataset();
+
+          console.log(ev.position);
+          // ev.pokedRenderer.getRenderWindow().getInteractor().getContainer()
         });
       }
     });
