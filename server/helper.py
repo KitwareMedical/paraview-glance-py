@@ -7,6 +7,8 @@ import itk
 from wslink import register as rpc
 from wslink.websocket import LinkProtocol
 
+from twisted.internet import reactor
+
 def print_matrix(itkmat, size=(3, 3)):
     for i in range(size[0]):
         for j in range(size[1]):
@@ -66,7 +68,7 @@ def _itk_image_to_type(itkimage):
         'F':'Float32Array',
         'D':'Float64Array',
         'B':'Uint8Array'
-        }
+    }
     return _python_to_js[mangle]
 
 def itk_to_vtkjs_image(itk_image, name='Default Name'):
@@ -95,7 +97,7 @@ def itk_to_vtkjs_image(itk_image, name='Default Name'):
                     'dataType': _itk_image_to_type(itk_image),
                     'name': 'Scalars',
                     'numberOfComponents': itk_image.GetNumberOfComponentsPerPixel(),
-                    'rangeTuple': [0, 255], # range of data
+                    'rangeTuple': [0, 255], # TODO range of data
                     'size': len(values),
                     'values': values,
                 },
@@ -217,3 +219,18 @@ class ObjectProtocol(LinkProtocol):
             guid = make_guid()
         self.objdir[guid] = obj
         return guid
+
+# Uses twisted's global reactor to schedule a call
+def deferResults(func):
+    def handler(self, *args):
+        result_id = make_guid()
+        def finish(*results):
+            self.publish('defer.results', {
+                '$resultId': result_id,
+                '$results': results,
+            })
+        reactor.callLater(0.1, lambda: finish(func(self, *args)))
+        return {
+            '$deferredResultId': result_id,
+        }
+    return handler
