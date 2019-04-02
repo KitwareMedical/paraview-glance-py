@@ -1,5 +1,19 @@
 import WebsocketConnection from 'paraview-glance/wslink/js/src/WebsocketConnection';
 
+function defer() {
+  let resolve;
+  let reject;
+  const promise = new Promise((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return {
+    promise,
+    resolve,
+    reject,
+  };
+}
+
 function setCallback(arr, cb) {
   arr.push(cb);
   return () => {
@@ -47,6 +61,9 @@ function connect(endpoint) {
   // obj -> { guid, dirty }
   const objDir = new WeakMap();
 
+  // resultId -> deferred
+  const deferredWaitlist = new Map();
+
   // a promise holding our session
   const pSession = new Promise((resolve, reject) => {
     // eslint-disable-next-line
@@ -59,6 +76,18 @@ function connect(endpoint) {
   pSession
     .then((session) => cbs.ready.forEach((cb) => cb(session)))
     .catch((error) => cbs.error.forEach((cb) => cb(error)));
+
+  // handle deferred results
+  pSession.then((session) => {
+    session.subscribe('defer.results', (deferredResult) => {
+      const { $resultId, $results } = deferredResult[0];
+      if (deferredWaitlist.has($resultId)) {
+        const deferred = deferredWaitlist.get($resultId);
+        deferredWaitlist.delete($resultId);
+        deferred.resolve($results);
+      }
+    });
+  });
 
   const api = {
     onready: (cb) => setCallback(cbs.ready, cb),
@@ -101,7 +130,17 @@ function connect(endpoint) {
             newArgs[i] = arg;
           }
         }
-        return uploadPromise.then(() => session.call(rpcEndpoint, newArgs));
+        return uploadPromise
+          .then(() => session.call(rpcEndpoint, newArgs))
+          .then((result) => {
+            if (result && result.$deferredResultId) {
+              const resultId = result.$deferredResultId;
+              const deferred = defer();
+              deferredWaitlist.set(resultId, deferred);
+              return deferred.promise;
+            }
+            return result;
+          });
       }),
     markDirty(targetObject) {
       if (targetObject && objDir.has(targetObject)) {
