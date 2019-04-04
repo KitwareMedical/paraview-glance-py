@@ -28,8 +28,8 @@ export const Actions = objEnum([
   // screenshots
   'TAKE_SCREENSHOT',
 
-  'CONNECT',
-  'UPLOAD_DATA',
+  // remote server
+  'CONNECT_REMOTE',
 ]);
 
 export const Getters = objEnum([
@@ -77,6 +77,9 @@ export const Mutations = objEnum([
   // screenshots
   'OPEN_SCREENSHOT_DIALOG',
   'CLOSE_SCREENSHOT_DIALOG',
+
+  // remote server
+  'SET_REMOTE',
 ]);
 
 export default {
