@@ -1,4 +1,5 @@
 import sys
+import os
 
 from wslink.websocket import ServerProtocol
 from wslink import server
@@ -18,4 +19,8 @@ class AlgorithmServer(ServerProtocol):
         self.updateSecret(AlgorithmServer.authKey)
 
 if __name__ == '__main__':
-    server.start(['--content', 'www'], AlgorithmServer)
+    static_dir = os.path.join(
+            os.path.realpath(
+                os.path.dirname(sys.argv[0])),
+            'www')
+    server.start(['--content', static_dir], AlgorithmServer)

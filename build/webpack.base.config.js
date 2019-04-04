@@ -11,7 +11,7 @@ const paths = {
   entry: path.join(__dirname, '../src/app.js'),
   source: path.join(__dirname, '../src'),
   externals: path.join(__dirname, '../externals'),
-  output: path.join(__dirname, '../dist'),
+  output: path.join(__dirname, '../server/www'),
   root: path.join(__dirname, '..'),
   node_modules: path.join(__dirname, '../node_modules'),
 };
