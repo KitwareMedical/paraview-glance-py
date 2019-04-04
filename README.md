@@ -14,6 +14,7 @@ $ cd glance-vessels/
 $ git submodule init
 $ git submodule update
 $ npm install
+$ npm run build:release
 $ cd server/
 $ pip install -r requirements.txt
 ```
