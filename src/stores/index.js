@@ -12,6 +12,7 @@ import files from 'paraview-glance/src/stores/fileLoader';
 import screenshots from 'paraview-glance/src/stores/screenshots';
 import views from 'paraview-glance/src/stores/views';
 import { Actions, Mutations } from 'paraview-glance/src/stores/types';
+import Remote from 'paraview-glance/src/remote';
 
 // http://jsperf.com/typeofvar
 function typeOf(o) {
@@ -46,7 +47,7 @@ function reduceState(state) {
   };
 }
 
-function createStore(proxyManager, remote) {
+function createStore(proxyManager) {
   let pxm = proxyManager;
   if (!proxyManager) {
     pxm = vtkProxyManager.newInstance({
@@ -57,7 +58,7 @@ function createStore(proxyManager, remote) {
   return new Vuex.Store({
     state: {
       proxyManager: pxm,
-      remote,
+      remote: null,
       route: 'landing', // valid values: landing, app
       savingStateName: null,
       loadingState: false,
@@ -88,8 +89,19 @@ function createStore(proxyManager, remote) {
         }
         state.panels[priority].push(component);
       },
+      SET_REMOTE(state, remote) {
+        state.remote = remote;
+      },
     },
     actions: {
+      CONNECT_REMOTE({ commit }, url) {
+        const remote = Remote.connect(url);
+        commit(Mutations.SET_REMOTE, remote);
+        return new Promise((resolve, reject) => {
+          remote.onready(resolve);
+          remote.onerror(reject);
+        });
+      },
       SAVE_STATE({ commit, state }, fileNameToUse) {
         const t = new Date();
         const fileName =

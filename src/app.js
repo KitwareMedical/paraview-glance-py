@@ -18,7 +18,6 @@ import App from 'paraview-glance/src/components/core/App';
 import Config from 'paraview-glance/src/config';
 import createStore from 'paraview-glance/src/stores';
 import { Actions, Mutations } from 'paraview-glance/src/stores/types';
-import Remote from 'paraview-glance/src/remote';
 
 // Expose IO API to Glance global object
 export const {
@@ -51,9 +50,7 @@ export function createViewer(container, proxyConfig = null) {
   const proxyConfiguration = proxyConfig || activeProxyConfig || Config.Proxy;
   const proxyManager = vtkProxyManager.newInstance({ proxyConfiguration });
 
-  const server = Remote.connect('ws://localhost:8080/ws');
-
-  const store = createStore(proxyManager, server);
+  const store = createStore(proxyManager);
 
   /* eslint-disable no-new */
   new Vue({
@@ -90,7 +87,17 @@ export function createViewer(container, proxyConfig = null) {
 
   return {
     processURLArgs() {
-      const { name, url, type } = vtkURLExtract.extractURLParameters();
+      const {
+        name,
+        url,
+        type,
+        wsServer,
+      } = vtkURLExtract.extractURLParameters();
+
+      if (wsServer && typeof wsServer === 'string') {
+        store.dispatch(Actions.CONNECT_REMOTE, wsServer);
+      }
+
       if (name && url) {
         const names = typeof name === 'string' ? [name] : name;
         const urls = typeof url === 'string' ? [url] : url;
