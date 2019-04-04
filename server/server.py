@@ -30,10 +30,13 @@ class AlgorithmServer(ServerProtocol):
         self.updateSecret(AlgorithmServer.authKey)
 
 if __name__ == '__main__':
-    static_dir = os.path.join(
-            os.path.realpath(
-                os.path.dirname(sys.argv[0])),
-            'www')
+    # https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile
+    try:
+        basepath = sys._MEIPASS
+    except:
+        basepath = os.path.dirname(os.path.dirname(sys.argv[0]))
+
+    static_dir = os.path.join(basepath, 'www')
     host = 'localhost'
     port = get_port()
     args = [
