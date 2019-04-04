@@ -18,4 +18,4 @@ class AlgorithmServer(ServerProtocol):
         self.updateSecret(AlgorithmServer.authKey)
 
 if __name__ == '__main__':
-    server.start(None, AlgorithmServer)
+    server.start(['--content', 'www'], AlgorithmServer)
