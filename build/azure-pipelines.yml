@@ -10,12 +10,23 @@ pool:
   vmImage: 'Ubuntu-16.04'
 
 steps:
+
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.7'
+    architecture: 'x64'
+
 - task: NodeTool@0
   inputs:
     versionSpec: '10.x'
   displayName: 'Install Node.js'
 
 - script: |
+    python -m pip install -r server/requirements.txt
+    python -m pip install pyinstaller
+  displayName: 'Install Python build dependencies'
+
+- script: |
     npm install
-    npm run build
+    npm run build:release
   displayName: 'npm install and build'
