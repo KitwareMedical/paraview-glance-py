@@ -1,4 +1,5 @@
 import { mapState } from 'vuex';
+import vtk from 'vtk.js/Sources/vtk';
 import macro from 'vtk.js/Sources/macro';
 import vtkPicker from 'vtk.js/Sources/Rendering/Core/PointPicker';
 import vtkDataArray from 'vtk.js/Sources/Common/Core/DataArray';
