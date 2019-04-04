@@ -35,3 +35,13 @@ steps:
     npm install
     npm run build:release
   displayName: 'npm install and build'
+
+- script: |
+    pyinstaller build/glance-vessels-onefile.spec
+    cp ./dist/glance-vessels ./dist/glance-vessels.linux.x86_64
+  displayName: 'Package'
+
+- task: PublishPipelineArtifact@0
+  inputs:
+    artifactName: 'Linux'
+    targetPath: './dist/glance-vessels.linux.x86_64'
