@@ -5,6 +5,7 @@ import helper
 
 class Protocol(helper.ObjectProtocol):
     @rpc('median_filter')
+    @helper.deferResults
     @helper.objdir_wrap
     def median_filter(self, image, radius):
         itk_image = helper.vtkjs_to_itk_image(image)
@@ -16,8 +17,10 @@ class Protocol(helper.ObjectProtocol):
 
         result = median_filter.GetOutput()
 
-        # TODO auto-serialize in objdir_wrap?
-        return helper.itk_to_vtkjs_image(result)
+        # maybe auto-serialize in objdir_wrap?
+        return helper.itk_to_vtkjs_image(
+                result,
+                'Median filter of {}'.format(image['name']))
 
     @rpc('segment')
     @helper.objdir_wrap
@@ -26,10 +29,17 @@ class Protocol(helper.ObjectProtocol):
 
         print('segment at:', point)
 
+        return helper.deferCall(lambda: self.segmentAtPoint(image, point))
+        # returns ID
         return [
-            {'point': [0, 10, 10], 'radius': 10},
-            {'point': [1, 11, 11], 'radius': 20},
-            {'point': [1, 12, 12], 'radius': 30},
-            {'point': [0, 13, 13], 'radius': 40},
-            {'point': [0, 14, 14], 'radius': 50},
-            ]
+            {
+                'id': 1,
+                'points': [
+                    {'point': [0, 10, 10], 'radius': 10},
+                    {'point': [1, 11, 11], 'radius': 20},
+                    {'point': [1, 12, 12], 'radius': 30},
+                    {'point': [0, 13, 13], 'radius': 40},
+                    {'point': [0, 14, 14], 'radius': 50},
+                ]
+            }
+        ]

@@ -100,7 +100,7 @@ export default {
             'Sources',
             'TrivialProducer',
             {
-              name: '<div>', // TODO vtkResult.name
+              name: vtkResult.name,
             }
           );
           this.resultSources.set(dataset, source);
