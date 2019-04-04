@@ -1,3 +1,5 @@
 node_modules
 dist
 server/www
+Pipfile
+build/glance-vessels/
