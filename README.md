@@ -23,7 +23,7 @@ To build a standalone executable:
 
 ```
 $ pip install pyinstaller
-$ pyinstaller build/server.spec
+$ pyinstaller build/glance-vessels.spec
 ```
 
 Running
