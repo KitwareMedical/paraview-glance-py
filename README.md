@@ -18,6 +18,13 @@ $ cd server/
 $ pip install -r requirements.txt
 ```
 
+To build a standalone executable:
+
+```
+$ pip install pyinstaller
+$ pyinstaller build/server.spec
+```
+
 Running
 =======
 
