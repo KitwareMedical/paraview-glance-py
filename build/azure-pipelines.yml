@@ -22,6 +22,11 @@ steps:
   displayName: 'Install Node.js'
 
 - script: |
+    git submodule init
+    git submodule update
+  displayName: 'Download Git submodules'
+
+- script: |
     python -m pip install -r server/requirements.txt
     python -m pip install pyinstaller
   displayName: 'Install Python build dependencies'
