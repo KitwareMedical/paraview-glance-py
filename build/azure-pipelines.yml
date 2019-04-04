@@ -93,5 +93,48 @@ jobs:
 
   - task: PublishPipelineArtifact@0
     inputs:
-      artifactName: 'macOS'
+      artifactName: 'MacOS'
       targetPath: './dist/glance-vessels.macos.x86_64'
+
+- job: 'Windows'
+  pool:
+    vmImage: 'vs2017-win2016'
+
+  steps:
+  - script: |
+      git submodule init
+      git submodule update
+    displayName: 'Download Git submodules'
+
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.7'
+      architecture: 'x64'
+
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '10.x'
+    displayName: 'Install Node.js'
+
+  - script: |
+      python -m pip install --upgrade pip
+      python -m pip install --upgrade setuptools
+      python -m pip install -r server/requirements.txt
+      python -m pip install pyinstaller
+      python -m pip install pywin32
+    displayName: 'Install Python build dependencies'
+
+  - bash: |
+      npm install
+      npm run build:release
+    displayName: 'npm install and build'
+
+  - bash: |
+      pyinstaller build/glance-vessels-onefile.spec
+      cp ./dist/glance-vessels.exe ./dist/glance-vessels.windows.x86_64.exe
+    displayName: 'Package'
+
+  - task: PublishPipelineArtifact@0
+    inputs:
+      artifactName: 'Windows'
+      targetPath: './dist/glance-vessels.windows.x86_64.exe'
