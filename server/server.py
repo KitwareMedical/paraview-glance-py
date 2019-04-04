@@ -1,10 +1,21 @@
 import sys
 import os
+import webbrowser
+import socket
 
 from wslink.websocket import ServerProtocol
 from wslink import server
+from twisted.internet import reactor
 
 from protocol import Protocol
+
+def get_port():
+    '''Don't care about race condition here for getting a free port.'''
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(('localhost', 0))
+    _, port = sock.getsockname()
+    sock.close()
+    return port
 
 class AlgorithmServer(ServerProtocol):
     # TODO change this default secret
@@ -23,4 +34,23 @@ if __name__ == '__main__':
             os.path.realpath(
                 os.path.dirname(sys.argv[0])),
             'www')
-    server.start(['--content', static_dir], AlgorithmServer)
+    host = 'localhost'
+    port = get_port()
+    args = [
+        '--content', static_dir,
+        '--host', host,
+        '--port', str(port)
+    ]
+
+    wsurl = 'ws://{host}:{port}/ws'.format(host=host, port=port)
+
+    def open_webapp():
+        webbrowser.open(
+                'http://{host}:{port}/?wsServer={wsurl}'.format(
+                    host=host, port=port, wsurl=wsurl))
+
+    #threading.Timer(1, target=open_webapp).start()
+    reactor.callWhenRunning(open_webapp)
+
+    server.start(args, AlgorithmServer)
+    server.stop_webserver()
