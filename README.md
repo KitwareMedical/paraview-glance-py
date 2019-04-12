@@ -5,8 +5,28 @@ Glance Vessels
 
 This is built off of ParaView Glance.
 
-Building
-========
+Installation
+------------
+
+Download the stand-alone executable:
+
+| Operating System | Executable |
+| ------------- |:-------------:|
+| Linux | [glance-vessels.linux.x86_64](https://github.com/KitwareMedical/glance-vessels/releases/download/latest/glance-vessels.linux.x86_64) |
+| macOS | [glance-vessels.macos.x86_64](https://github.com/KitwareMedical/glance-vessels/releases/download/latest/glance-vessels.macos.x86_64) |
+| Windows | [glance-vessels.windows.x86_64.exe](https://github.com/KitwareMedical/glance-vessels/releases/download/latest/glance-vessels.windows.x86_64.exe) |
+
+Usage
+-----
+
+Run the executable. A new tab will open in your web browser with the
+application user interface.
+
+
+Development
+-----------
+
+### Build
 
 This has only been tested with python3.
 
@@ -46,8 +66,7 @@ Or as a single file:
 $ pyinstaller build/glance-vessels-onefile.spec
 ```
 
-Running
-=======
+### Run
 
 One terminal:
 ```
