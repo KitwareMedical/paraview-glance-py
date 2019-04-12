@@ -25,7 +25,25 @@ To build a standalone executable:
 
 ```
 $ pip install pyinstaller
+```
+
+On Windows, also install *pywin32*:
+
+```
+$ pip install pywin32
+```
+
+Then package as a directory:
+
+```
 $ pyinstaller build/glance-vessels.spec
+
+```
+
+Or as a single file:
+
+```
+$ pyinstaller build/glance-vessels-onefile.spec
 ```
 
 Running
