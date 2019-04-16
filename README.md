@@ -89,3 +89,20 @@ $ python server.py
 
 After the python server starts up, visit `http://localhost:9999/` to view the
 webapp. If you get a blank screen, try clearing cache and then refreshing.
+
+
+Troubleshooting
+---------------
+
+### Library issues when running (linux)
+
+For the prebuilt binaries, this is likely due to the automated build
+environment using a different version of certain libraries. The easiest
+workaround is to follow the instructions under "Development" above and build
+the application locally so pyinstaller can link against local libraries.
+
+### The application is still running after closing the tab
+
+Right now the server is set to self-terminate after 5 minutes. Either kill the
+application manually or wait 5 minutes for the application to self-terminate.
+Multiple instances of the application will not interfere with one another.
