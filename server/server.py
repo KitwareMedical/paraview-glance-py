@@ -38,7 +38,7 @@ if __name__ == '__main__':
 
     static_dir = os.path.join(basepath, 'www')
     host = 'localhost'
-    port = get_port()
+    port = 8888
     args = [
         '--content', static_dir,
         '--host', host,

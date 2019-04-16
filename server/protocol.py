@@ -21,25 +21,3 @@ class Protocol(helper.ObjectProtocol):
         return helper.itk_to_vtkjs_image(
                 result,
                 'Median filter of {}'.format(image['name']))
-
-    @rpc('segment')
-    @helper.objdir_wrap
-    def segment(self, image, point):
-        itk_image = helper.vtkjs_to_itk_image(image)
-
-        print('segment at:', point)
-
-        return helper.deferCall(lambda: self.segmentAtPoint(image, point))
-        # returns ID
-        return [
-            {
-                'id': 1,
-                'points': [
-                    {'point': [0, 10, 10], 'radius': 10},
-                    {'point': [1, 11, 11], 'radius': 20},
-                    {'point': [1, 12, 12], 'radius': 30},
-                    {'point': [0, 13, 13], 'radius': 40},
-                    {'point': [0, 14, 14], 'radius': 50},
-                ]
-            }
-        ]

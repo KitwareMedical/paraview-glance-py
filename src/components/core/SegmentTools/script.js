@@ -2,6 +2,7 @@ import { mapState } from 'vuex';
 import vtk from 'vtk.js/Sources/vtk';
 import macro from 'vtk.js/Sources/macro';
 import vtkPicker from 'vtk.js/Sources/Rendering/Core/PointPicker';
+import vtkCellPicker from 'vtk.js/Sources/Rendering/Core/CellPicker';
 import vtkDataArray from 'vtk.js/Sources/Common/Core/DataArray';
 import vtkPoints from 'vtk.js/Sources/Common/Core/Points';
 import vtkPolyData from 'vtk.js/Sources/Common/DataModel/PolyData';
@@ -10,8 +11,53 @@ import { VaryRadius } from 'vtk.js/Sources/Filters/General/TubeFilter/Constants'
 import { VtkDataTypes } from 'vtk.js/Sources/Common/Core/DataArray/Constants';
 
 import utils from 'paraview-glance/src/utils';
+import stripsToPolys from './StripsToPolys';
 
 const { forAllViews } = utils;
+
+function getTubeIdFromCell(cellId, cellToTube) {
+  for (let i = 0; i < cellToTube.length; i++) {
+    const [cellIdThreshold, tubeId] = cellToTube[i];
+    if (cellId < cellIdThreshold) {
+      return tubeId;
+    }
+  }
+  return -1;
+}
+
+function makeTubeCollection() {
+  const order = [];
+  const map = {};
+
+  return {
+    getList() {
+      return order;
+    },
+    get(id) {
+      const index = map[id];
+      if (index !== undefined) {
+        return order[index];
+      }
+      return null;
+    },
+    put(id, obj) {
+      const index = map[id];
+      if (index === undefined) {
+        map[id] = order.length;
+        order.push(obj);
+      } else {
+        order[index] = obj;
+      }
+    },
+    delete(id) {
+      const index = map[id];
+      if (index !== undefined) {
+        order.splice(index, 1);
+        delete map[id];
+      }
+    },
+  };
+}
 
 function onClick(interactor, button, cb) {
   const pressFn = `on${macro.capitalize(button)}ButtonPress`;
@@ -78,16 +124,19 @@ function centerlineToTube(centerline) {
 }
 
 const picker = vtkPicker.newInstance();
+const cellPicker = vtkCellPicker.newInstance();
 
 export default {
   name: 'SegmentTools',
   data() {
     return {
-      resultSources: new WeakMap(),
+      results: new WeakMap(),
       menuX: 0,
       menuY: 0,
       contextMenu: false,
       segmentScale: 5,
+      medianRadius: 2,
+      loading: false,
     };
   },
   computed: mapState(['proxyManager', 'remote']),
@@ -95,25 +144,32 @@ export default {
     run() {
       const activeSource = this.proxyManager.getActiveSource();
       const dataset = activeSource.getDataset();
-      this.remote.call('median_filter', dataset, 2).then(([vtkResult]) => {
-        if (!this.resultSources.has(dataset)) {
-          const source = this.proxyManager.createProxy(
-            'Sources',
-            'TrivialProducer',
-            {
-              name: vtkResult.name,
-            }
-          );
-          this.resultSources.set(dataset, source);
-        }
 
-        const source = this.resultSources.get(dataset);
-        if (source !== undefined) {
-          const image = vtk(vtkResult);
-          source.setInputData(image);
-          this.proxyManager.createRepresentationInAllViews(source);
-        }
-      });
+      this.loading = true;
+
+      this.remote
+        .call('median_filter', dataset, this.medianRadius)
+        .then((vtkResult) => {
+          this.loading = false;
+
+          if (!this.results.has(activeSource)) {
+            const source = this.proxyManager.createProxy(
+              'Sources',
+              'TrivialProducer',
+              {
+                name: vtkResult.name,
+              }
+            );
+            this.results.set(activeSource, source);
+          }
+
+          const source = this.results.get(activeSource);
+          if (source !== undefined) {
+            const image = vtk(vtkResult);
+            source.setInputData(image);
+            this.proxyManager.createRepresentationInAllViews(source);
+          }
+        });
     },
   },
   mounted() {
@@ -134,23 +190,38 @@ export default {
           const dataset = activeSource.getDataset();
 
           this.remote
-            .call('segment', dataset, picker.getPointIJK())
-            // TODO receive whole tube set
-            .then((centerline) => {
-              if (!this.resultSources.has(dataset)) {
+            .call('segment', dataset, picker.getPointIJK(), 2.0)
+            .then((results) => {
+              const centerline = results[0];
+              console.log(centerline);
+              if (!this.results.has(activeSource)) {
+                // TODO move this to wherever we select the active dataset
                 const source = this.proxyManager.createProxy(
                   'Sources',
                   'TrivialProducer',
                   {
-                    name: 'name', // TODO vtkResult.name
+                    name: `Tubes for ${activeSource.getName()}`,
                   }
                 );
-                this.resultSources.set(dataset, source);
+                this.results.set(activeSource, {
+                  source,
+                  tubes: makeTubeCollection(),
+                  cellToTubeId: [],
+                });
+                source.setInputData(vtkPolyData.newInstance());
+                activeSource.activate();
               }
 
-              const source = this.resultSources.get(dataset);
-              if (source !== undefined) {
-                const tube = centerlineToTube(centerline);
+              const resultData = this.results.get(activeSource);
+              if (resultData !== undefined) {
+                const { source, tubes, cellToTubeId } = resultData;
+                tubes.put(centerline.id, centerline);
+                const tube = centerlineToTube(centerline.points);
+                stripsToPolys(tube);
+                const totalNumberOfCells =
+                  (cellToTubeId[cellToTubeId.length - 1] || [0, 0])[0] +
+                  tube.getNumberOfCells();
+                cellToTubeId.push([totalNumberOfCells, centerline.id]);
                 source.setInputData(tube);
                 this.proxyManager.createRepresentationInAllViews(source);
               }
@@ -166,10 +237,66 @@ export default {
 
           // TODO use selected source
           const activeSource = this.proxyManager.getActiveSource();
-          const dataset = activeSource.getDataset();
 
           console.log(ev.position);
           // ev.pokedRenderer.getRenderWindow().getInteractor().getContainer()
+        });
+      } else {
+        const interactor = view.getRenderWindow().getInteractor();
+        cellPicker.setPickFromList(1);
+        interactor.setPicker(cellPicker);
+
+        // TODO unsub
+        onClick(interactor, 'left', (ev) => {
+          // TODO use selected source
+          const activeSource = this.proxyManager.getActiveSource();
+
+          cellPicker.initializePickList();
+          if (this.results.has(activeSource)) {
+            const { source, cellToTubeId } = this.results.get(activeSource);
+            const rep = this.proxyManager.getRepresentation(source, view);
+            rep.getActors().forEach(cellPicker.addPickList);
+
+            const point = [ev.position.x, ev.position.y, 0];
+            cellPicker.pick(point, ev.pokedRenderer);
+
+            const cellId = cellPicker.getCellId();
+            if (cellId > -1) {
+              const tubeId = getTubeIdFromCell(cellId, cellToTubeId);
+              if (tubeId > -1) {
+                console.log('Found tube', tubeId);
+
+                // get closest point on centerline
+                // probably do this on python side
+                const resultData = this.results.get(activeSource);
+                if (resultData !== undefined) {
+                  const { tubes } = resultData;
+                  const centerline = tubes.get(tubeId);
+                  const pickCoord = cellPicker.getPickPosition();
+
+                  const closestPoint = function() {
+                    let dist = Infinity;
+                    let index = -1;
+                    for (let i = 0; i < centerline.points.length; i++) {
+                      const [x, y, z] = centerline.points[i].point;
+                      const d2 =
+                        (x - pickCoord[0]) ** 2 +
+                        (y - pickCoord[1]) ** 2 +
+                        (z - pickCoord[2]) ** 2;
+                      if (d2 > dist) {
+                        return index;
+                      }
+                      dist = d2;
+                      index = i;
+                    }
+                    return index;
+                  };
+                  const ptIndex = closestPoint();
+                  console.log(ptIndex, centerline.points[ptIndex]);
+                }
+              }
+            }
+          }
         });
       }
     });
