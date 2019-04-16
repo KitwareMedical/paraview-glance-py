@@ -141,6 +141,14 @@ export default {
     };
   },
   computed: mapState(['proxyManager', 'remote']),
+  mounted() {
+    // TODO unsub
+    this.proxyManager.onProxyRegistrationChange((info) => {
+      if (info.proxyGroup === 'Sources') {
+        this.$forceUpdate();
+      }
+    });
+  },
   methods: {
     getVolumes() {
       return this.proxyManager
