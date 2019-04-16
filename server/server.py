@@ -38,7 +38,7 @@ if __name__ == '__main__':
 
     static_dir = os.path.join(basepath, 'www')
     host = 'localhost'
-    port = 8888
+    port = get_port()
     args = [
         '--content', static_dir,
         '--host', host,
@@ -46,11 +46,13 @@ if __name__ == '__main__':
     ]
 
     wsurl = 'ws://{host}:{port}/ws'.format(host=host, port=port)
+    full_url = 'http://{host}:{port}/?wsServer={wsurl}'.format(
+            host=host, port=port, wsurl=wsurl)
+
+    print('If the browser doesn\'t open, navigate to:', full_url)
 
     def open_webapp():
-        webbrowser.open(
-                'http://{host}:{port}/?wsServer={wsurl}'.format(
-                    host=host, port=port, wsurl=wsurl))
+        webbrowser.open(full_url)
 
     #threading.Timer(1, target=open_webapp).start()
     reactor.callWhenRunning(open_webapp)

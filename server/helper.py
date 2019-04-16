@@ -227,7 +227,9 @@ def deferResults(func):
         def finish(*results):
             self.publish('defer.results', {
                 '$resultId': result_id,
-                '$results': results,
+                # TODO make sure this doesn't break code that
+                # runs without deferResults.
+                '$results': results[0] if len(results) == 1 else results,
             })
         reactor.callLater(0.1, lambda: finish(func(self, *args)))
         return {
