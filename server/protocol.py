@@ -4,9 +4,9 @@ from wslink import register as rpc
 import helper
 
 class Protocol(helper.ObjectProtocol):
-    @rpc('median_filter')
-    @helper.deferResults
-    @helper.objdir_wrap
+    @rpc('median_filter') # method is available via 'median_filter' rpc name
+    @helper.deferResults # median filter is slow, so defer results
+    @helper.objdir_wrap # image is cached via object directory
     def median_filter(self, image, radius):
         itk_image = helper.vtkjs_to_itk_image(image)
         

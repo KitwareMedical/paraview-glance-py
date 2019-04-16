@@ -55,7 +55,7 @@ if __name__ == '__main__':
         webbrowser.open(full_url)
 
     #threading.Timer(1, target=open_webapp).start()
-    reactor.callWhenRunning(open_webapp)
+    reactor.callLater(0.1, open_webapp)
 
     server.start(args, AlgorithmServer)
     server.stop_webserver()
