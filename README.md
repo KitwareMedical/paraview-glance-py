@@ -68,6 +68,13 @@ $ pyinstaller build/glance-vessels-onefile.spec
 
 ### Run
 
+Simply run the resultant executable from pyinstaller!
+
+### Run web and server separately
+
+For dev purposes, it is better to run the web and server as separate
+instances for debugging.
+
 One terminal:
 ```
 $ cd glance-vessels/
