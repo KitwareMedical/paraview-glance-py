@@ -1,24 +1,38 @@
-<v-container :class="$style.container">
+<v-container :class="[$style.container, 'grid-list-lg']">
   <v-layout row wrap>
     <v-flex xs12>
       <v-select
         label="Select target image"
-        solo
+        :items="getVolumes()"
+        item-text="name"
+        item-value="source"
+        :value="master"
+        @input="setMasterVolume"
       />
     </v-flex>
-    <v-flex xs12>
+    <v-flex xs10>
       <v-slider
         v-model="medianRadius"
         min="1"
         max="10"
         step="1"
         label="Median Radius"
+        always-dirty
+      />
+    </v-flex>
+    <v-flex xs2>
+      <v-text-field
+        type="number"
+        min="1"
+        max="10"
+        step="1"
+        v-model="medianRadius"
       />
     </v-flex>
     <v-flex xs12>
       <v-btn
         @click="run"
-        :disabled="loading"
+        :disabled="!master || loading"
       >
         Run Median Filter
       </v-btn>

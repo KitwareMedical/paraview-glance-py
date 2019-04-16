@@ -137,13 +137,26 @@ export default {
       segmentScale: 5,
       medianRadius: 2,
       loading: false,
+      master: null,
     };
   },
   computed: mapState(['proxyManager', 'remote']),
   methods: {
+    getVolumes() {
+      return this.proxyManager
+        .getSources()
+        .filter((s) => s.getType() === 'vtkImageData')
+        .map((s) => ({
+          name: s.getName(),
+          source: s,
+        }));
+    },
+    setMasterVolume(source) {
+      this.master = source;
+    },
     run() {
-      const activeSource = this.proxyManager.getActiveSource();
-      const dataset = activeSource.getDataset();
+      const master = this.master;
+      const dataset = master.getDataset();
 
       this.loading = true;
 
@@ -152,7 +165,7 @@ export default {
         .then((vtkResult) => {
           this.loading = false;
 
-          if (!this.results.has(activeSource)) {
+          if (!this.results.has(master)) {
             const source = this.proxyManager.createProxy(
               'Sources',
               'TrivialProducer',
@@ -160,10 +173,10 @@ export default {
                 name: vtkResult.name,
               }
             );
-            this.results.set(activeSource, source);
+            this.results.set(master, source);
           }
 
-          const source = this.results.get(activeSource);
+          const source = this.results.get(master);
           if (source !== undefined) {
             const image = vtk(vtkResult);
             source.setInputData(image);
