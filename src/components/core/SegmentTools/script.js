@@ -145,6 +145,13 @@ export default {
     // TODO unsub
     this.proxyManager.onProxyRegistrationChange((info) => {
       if (info.proxyGroup === 'Sources') {
+        if (
+          info.action === 'unregister' &&
+          this.master &&
+          this.master.getProxyId() === info.proxyId
+        ) {
+          this.master = null;
+        }
         this.$forceUpdate();
       }
     });
