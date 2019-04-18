@@ -1,7 +1,10 @@
 import itk
 from wslink import register as rpc
+import random
 
 import helper
+
+ii = 0
 
 class Protocol(helper.ObjectProtocol):
     @rpc('median_filter') # method is available via 'median_filter' rpc name
@@ -21,3 +24,29 @@ class Protocol(helper.ObjectProtocol):
         return helper.itk_to_vtkjs_image(
                 result,
                 'Median filter of {}'.format(image['name']))
+
+    @rpc('segment')
+    @helper.deferResults
+    @helper.objdir_wrap
+    def segment(self, image, point, scale):
+        global ii
+        itk_image = helper.vtkjs_to_itk_image(image)
+
+        print('segment at:', point)
+
+        ii += 1
+
+        bx = random.randint(0, 50)
+        by = random.randint(0, 50)
+        bz = random.randint(0, 50)
+
+        return {
+            'id': ii,
+            'points': [
+                { 'point': [bx, by+4, bz+4], 'radius': 3 },
+                { 'point': [bx+1, by+11, bz+11], 'radius': 4 },
+                { 'point': [bx+1, by+15, bz+15], 'radius': 4 },
+                { 'point': [bx, by+18, bz+18], 'radius': 3 },
+                { 'point': [bx, by+24, bz+24], 'radius': 4 },
+            ],
+        }

@@ -7,6 +7,7 @@ import vtkDataArray from 'vtk.js/Sources/Common/Core/DataArray';
 import vtkPoints from 'vtk.js/Sources/Common/Core/Points';
 import vtkPolyData from 'vtk.js/Sources/Common/DataModel/PolyData';
 import vtkTubeFilter from 'vtk.js/Sources/Filters/General/TubeFilter';
+import vtkAppendPolyData from 'vtk.js/Sources/Filters/General/AppendPolyData';
 import { VaryRadius } from 'vtk.js/Sources/Filters/General/TubeFilter/Constants';
 import { VtkDataTypes } from 'vtk.js/Sources/Common/Core/DataArray/Constants';
 
@@ -155,6 +156,140 @@ export default {
         this.$forceUpdate();
       }
     });
+
+    // TODO unsub
+    forAllViews(this.proxyManager, (view) => {
+      if (view.isA('vtkView2DProxy')) {
+        const interactor = view.getRenderWindow().getInteractor();
+        interactor.setPicker(picker);
+
+        // left mouse click
+        // TODO unsub
+        onClick(interactor, 'left', (ev) => {
+          const point = [ev.position.x, ev.position.y, 0];
+          picker.pick(point, ev.pokedRenderer);
+
+          // TODO use selected source
+          const activeSource = this.proxyManager.getActiveSource();
+          const dataset = activeSource.getDataset();
+
+          this.remote
+            .call('segment', dataset, picker.getPointIJK(), 2.0)
+            .then((centerline) => {
+              console.log(centerline);
+              if (!this.results.has(activeSource)) {
+                // TODO move this to wherever we select the active dataset
+                const source = this.proxyManager.createProxy(
+                  'Sources',
+                  'TrivialProducer',
+                  {
+                    name: `Tubes for ${activeSource.getName()}`,
+                  }
+                );
+                this.results.set(activeSource, {
+                  source,
+                  tubes: makeTubeCollection(),
+                  cellToTubeId: [],
+                });
+                source.setInputData(vtkPolyData.newInstance());
+                activeSource.activate();
+              }
+
+              const resultData = this.results.get(activeSource);
+              if (resultData !== undefined) {
+                const { source, tubes, cellToTubeId } = resultData;
+                tubes.put(centerline.id, centerline);
+
+                const newTube = centerlineToTube(centerline.points);
+                stripsToPolys(newTube);
+
+                // append tube to existing tubes
+                const appendFilter = vtkAppendPolyData.newInstance();
+                appendFilter.setInputData(source.getDataset());
+                appendFilter.addInputData(newTube);
+                const allTubes = appendFilter.getOutputData();
+
+                const totalNumberOfCells = allTubes.getNumberOfCells();
+                cellToTubeId.push([totalNumberOfCells, centerline.id]);
+
+                source.setInputData(allTubes);
+                this.proxyManager.createRepresentationInAllViews(source);
+              }
+            });
+        });
+
+        // right mouse click
+        // TODO unsub
+        onClick(interactor, 'right', (ev) => {
+          const point = [ev.position.x, ev.position.y, 0];
+          picker.pick(point, ev.pokedRenderer);
+
+          // TODO use selected source
+          const activeSource = this.proxyManager.getActiveSource();
+
+          console.log(ev.position);
+          // ev.pokedRenderer.getRenderWindow().getInteractor().getContainer()
+        });
+      } else {
+        const interactor = view.getRenderWindow().getInteractor();
+        cellPicker.setPickFromList(1);
+        interactor.setPicker(cellPicker);
+
+        // TODO unsub
+        onClick(interactor, 'left', (ev) => {
+          // TODO use selected source
+          const activeSource = this.proxyManager.getActiveSource();
+
+          cellPicker.initializePickList();
+          if (this.results.has(activeSource)) {
+            const { source, cellToTubeId } = this.results.get(activeSource);
+            const rep = this.proxyManager.getRepresentation(source, view);
+            rep.getActors().forEach(cellPicker.addPickList);
+
+            const point = [ev.position.x, ev.position.y, 0];
+            cellPicker.pick(point, ev.pokedRenderer);
+
+            const cellId = cellPicker.getCellId();
+            if (cellId > -1) {
+              const tubeId = getTubeIdFromCell(cellId, cellToTubeId);
+              if (tubeId > -1) {
+                console.log('Found tube', tubeId);
+
+                // get closest point on centerline
+                // probably do this on python side
+                const resultData = this.results.get(activeSource);
+                if (resultData !== undefined) {
+                  const { tubes } = resultData;
+                  const centerline = tubes.get(tubeId);
+                  const pickCoord = cellPicker.getPickPosition();
+
+                  const closestPoint = function() {
+                    let dist = Infinity;
+                    let index = -1;
+                    for (let i = 0; i < centerline.points.length; i++) {
+                      const [x, y, z] = centerline.points[i].point;
+                      const d2 =
+                        (x - pickCoord[0]) ** 2 +
+                        (y - pickCoord[1]) ** 2 +
+                        (z - pickCoord[2]) ** 2;
+                      if (d2 > dist) {
+                        return index;
+                      }
+                      dist = d2;
+                      index = i;
+                    }
+                    return index;
+                  };
+                  const ptIndex = closestPoint();
+                  console.log('closest point', ptIndex, centerline.points[ptIndex]);
+                }
+              }
+            }
+          }
+        });
+      }
+    });
+
   },
   methods: {
     getVolumes() {
