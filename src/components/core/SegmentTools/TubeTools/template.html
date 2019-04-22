@@ -1,0 +1,47 @@
+<v-container :class="[$style.container, 'grid-list-lg']">
+  <v-layout row wrap>
+    <v-flex xs12>
+      <v-switch
+        v-model="enabled"
+        label="Segment Mode"
+        :disabled="!inputData"
+      />
+    </v-flex>
+  </v-layout>
+  <v-list>
+    <v-subheader>Tubes</v-subheader>
+    <v-divider />
+    <template
+      v-for="tube in listTubes()"
+    >
+      <v-list-tile :key="tube.id">
+        <v-list-tile-avatar>
+          <v-btn icon>
+            <v-icon color="grey">visibility</v-icon>
+          </v-btn>
+        </v-list-tile-avatar>
+        <v-list-tile-content>
+          {{ tube.points.length }} points
+        </v-list-tile-content>
+        <v-list-tile-action>
+          <v-btn
+            icon
+            @click="deleteTube(tube.id)"
+          >
+            <v-icon color="grey">delete</v-icon>
+          </v-btn>
+        </v-list-tile-action>
+      </v-list-tile>
+      <v-divider />
+    </template>
+    <v-list-tile v-show="pendingSegs > 0">
+      <v-list-tile-avatar>
+        <v-progress-circular indeterminate />
+      </v-list-tile-avatar>
+      <v-list-tile-content>
+        {{ pendingSegs }} segmenting...
+      </v-list-tile-content>
+    </v-list-tile>
+    <v-divider />
+  </v-list>
+</v-container>

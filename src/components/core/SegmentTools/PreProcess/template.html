@@ -1,0 +1,32 @@
+<v-container :class="[$style.container, 'grid-list-lg']">
+  <v-layout row wrap>
+    <v-flex xs10>
+      <v-slider
+        v-model="medianRadius"
+        min="1"
+        max="15"
+        step="1"
+        label="Median Radius"
+        always-dirty
+      />
+    </v-flex>
+    <v-flex xs2>
+      <v-text-field
+        type="number"
+        min="1"
+        max="15"
+        step="1"
+        v-model="medianRadius"
+      />
+    </v-flex>
+    <v-flex xs12 class="text-xs-center">
+      <v-btn
+        @click="run"
+        :disabled="!inputSource"
+        :loading="loading"
+      >
+        Apply Median Filter
+      </v-btn>
+    </v-flex>
+  </v-layout>
+</v-container>
