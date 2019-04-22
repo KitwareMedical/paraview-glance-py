@@ -11,6 +11,17 @@
   <v-list>
     <v-subheader>Tubes</v-subheader>
     <v-divider />
+    <template v-if="listTubes().length === 0 && pendingSegs === 0">
+      <v-list-tile>
+        <v-list-tile-content
+          class="grey--text"
+          :style="{ 'align-items': 'center' }"
+        >
+          No tubes yet
+        </v-list-tile-content>
+      </v-list-tile>
+      <v-divider />
+    </template>
     <template
       v-for="tube in listTubes()"
     >
