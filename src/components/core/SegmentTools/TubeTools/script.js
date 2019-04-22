@@ -120,7 +120,6 @@ export default {
     deleteTube(tubeId) {
       // TODO delete tube server-side
       if (this.inputData) {
-        console.log(tubeId);
         this.inputData.tubes.delete(tubeId);
         this.$forceUpdate();
       }
