@@ -6,7 +6,6 @@ import vtkCellPicker from 'vtk.js/Sources/Rendering/Core/CellPicker';
 
 import utils from 'paraview-glance/src/utils';
 import TubeUtils from 'paraview-glance/src/components/core/SegmentTools/TubeUtils';
-import stripsToPolys from 'paraview-glance/src/components/core/SegmentTools/StripsToPolys';
 
 const { forAllViews } = utils;
 // global pickers
@@ -76,11 +75,9 @@ export default {
         onClick(interactor, 'left', (ev) => {
           if (this.ready) {
             this.pendingSegs++;
-            this.segmentAtClick(ev.position, view)
-              .then(() => {
-                this.pendingSegs--;
-                this.$forceUpdate();
-              });
+            this.segmentAtClick(ev.position, view).then(() => {
+              this.pendingSegs--;
+            });
           }
         });
 
@@ -113,7 +110,7 @@ export default {
   methods: {
     listTubes() {
       if (this.inputData) {
-        return this.inputData.tubes.getList();
+        return this.inputData.tubes.getAll();
       }
       return [];
     },
@@ -121,8 +118,16 @@ export default {
       // TODO delete tube server-side
       if (this.inputData) {
         this.inputData.tubes.delete(tubeId);
-        this.$forceUpdate();
+        this.refreshTubeUI();
       }
+    },
+    toggleTubeVisibility(tubeId) {
+      this.inputData;
+    },
+    refreshTubeUI() {
+      const { tubes, tubeSource } = this.inputData;
+      tubeSource.setInputData(tubes.getTubePolyData());
+      this.$forceUpdate();
     },
     segmentAtClick(position, view) {
       const point = [position.x, position.y, 0];
@@ -138,29 +143,14 @@ export default {
       return this.remote
         .call('segment', dataset, pointPicker.getPointIJK(), 2.0)
         .then((centerline) => {
-          console.log(centerline);
-          const { postProcessed, tubes, cellToTubeId, tubeSource } = this.inputData;
+          const { tubes, tubeSource } = this.inputData;
+          tubes.put(centerline);
 
-          tubes.put(centerline.id, centerline);
-
-          const newTube = TubeUtils.centerlineToTube(centerline.points);
-          stripsToPolys(newTube);
-
-          // append tube to existing tubes
-          const appendFilter = vtkAppendPolyData.newInstance();
-          appendFilter.setInputData(tubeSource.getDataset());
-          appendFilter.addInputData(newTube);
-          const allTubes = appendFilter.getOutputData();
-
-          const totalNumberOfCells = allTubes.getNumberOfCells();
-          cellToTubeId.push([totalNumberOfCells, centerline.id]);
-
-          tubeSource.setInputData(allTubes);
-          this.proxyManager.createRepresentationInAllViews(tubeSource);
+          this.refreshTubeUI();
         });
     },
     tryPickTube(position, view) {
-      const { tubeSource, tubes, cellToTubeId } = this.inputData;
+      const { tubeSource, tubes } = this.inputData;
       cellPicker.initializePickList();
 
       const rep = this.proxyManager.getRepresentation(tubeSource, view);
@@ -171,7 +161,7 @@ export default {
 
       const cellId = cellPicker.getCellId();
       if (cellId > -1) {
-        const tubeId = TubeUtils.getTubeIdFromCell(cellId, cellToTubeId);
+        const tubeId = tubes.findTubeFromCell(cellId);
         if (tubeId > -1) {
           console.log('Found tube', tubeId);
 

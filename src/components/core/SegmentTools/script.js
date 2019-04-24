@@ -66,13 +66,13 @@ export default {
         );
 
         tubeSource.setInputData(vtkPolyData.newInstance());
- 
+        this.proxyManager.createRepresentationInAllViews(tubeSource);
+
         this.pipelines.set(source, {
           // when no post-processing, postProcessed is original source
           postProcessed: source,
           tubeSource,
-          tubes: TubeUtils.makeTubeCollection(),
-          cellToTubeId: [],
+          tubes: new TubeUtils.TubeCollection(),
         });
 
         // re-activate previous active source
@@ -82,7 +82,7 @@ export default {
     setPostProcessed(image) {
       const pipeline = this.pipelines.get(this.master);
 
-      if (pipeline.postProcessed = this.master) {
+      if (pipeline.postProcessed == this.master) {
         // so we can re-activate current source
         const activeSource = this.proxyManager.getActiveSource();
 
@@ -93,7 +93,7 @@ export default {
             name: `Pre-processed ${this.master.getName()}`,
           }
         );
-        source.setInputData(vtkPolyData.newInstance()),
+        source.setInputData(vtkPolyData.newInstance());
         pipeline.postProcessed = source;
 
         // re-activate previous active source
