@@ -158,7 +158,7 @@ export default {
 
       const dataset = source.getDataset();
       return this.remote
-        .call('segment', dataset, pointPicker.getPointIJK(), 2.0)
+        .call('segment', dataset, pointPicker.getPointIJK(), this.scale)
         .then((centerline) => {
           const { tubes, tubeSource } = this.inputData;
           tubes.put(centerline);
