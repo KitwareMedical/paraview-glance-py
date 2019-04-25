@@ -94,44 +94,56 @@ function connect(endpoint) {
     onerror: (cb) => setCallback(cbs.error, cb),
     call: (rpcEndpoint, ...args) =>
       pSession.then((session) => {
-        const newArgs = Array(args.length);
-        let uploadPromise = Promise.resolve();
-        for (let i = 0; i < args.length; i++) {
-          const arg = args[i];
+        const promisedArgs = args.map((arg) => {
           if (arg && arg.isA && arg.isA('vtkObject')) {
-            let guid = null;
-            let dirty = false;
+            // see if objdir has the vtk object
             if (objDir.has(arg)) {
-              const state = objDir.get(arg);
-              guid = state.guid;
-              dirty = state.dirty;
+              const { pending, guid, dirty } = objDir.get(arg);
+              // obj is already being uploaded, so wait
+              if (pending) {
+                return pending.promise;
+              }
+              // obj is not dirty, so return guid
+              if (!dirty) {
+                return Promise.resolve({
+                  __objguid__: guid,
+                });
+              }
             }
 
-            if (objDir.has(arg) && !dirty) {
-              newArgs[i] = {
+            // obj is either dirty or not uploaded, so upload it
+            const serialized = arg.getState();
+            extractVtkAttachments(serialized, session);
+
+            objDir.set(arg, {
+              pending: defer(),
+              guid: null,
+              dirty: false,
+            });
+
+            // null GUID means to generate a new GUID server-side
+            return api.call('objdir_put', serialized, null).then((guid) => {
+              const { pending } = objDir.get(arg);
+              const retval = {
                 __objguid__: guid,
               };
-            } else {
-              const serialized = arg.getState();
-              extractVtkAttachments(serialized, session);
-              uploadPromise = uploadPromise
-                .then(() => api.call('objdir_put', serialized, guid))
-                .then((newGuid) => {
-                  newArgs[i] = {
-                    __objguid__: newGuid,
-                  };
-                  objDir.set(arg, {
-                    guid: newGuid,
-                    dirty: false,
-                  });
-                });
-            }
-          } else {
-            newArgs[i] = arg;
+              pending.resolve(retval);
+
+              objDir.set(arg, {
+                pending: null,
+                guid,
+                dirty: false,
+              });
+
+              return retval;
+            });
           }
-        }
-        return uploadPromise
-          .then(() => session.call(rpcEndpoint, newArgs))
+          // passthrough arg
+          return Promise.resolve(arg);
+        });
+
+        return Promise.all(promisedArgs)
+          .then((newArgs) => session.call(rpcEndpoint, newArgs))
           .then((result) => {
             if (result && result.$deferredResultId) {
               const resultId = result.$deferredResultId;
