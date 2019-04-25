@@ -4,8 +4,6 @@ import random
 
 import helper
 
-ii = 0
-
 class Protocol(helper.ObjectProtocol):
     @rpc('median_filter') # method is available via 'median_filter' rpc name
     @helper.deferResults # median filter is slow, so defer results
@@ -29,12 +27,16 @@ class Protocol(helper.ObjectProtocol):
     @helper.deferResults
     @helper.objdir_wrap
     def segment(self, image, point, scale):
-        global ii
+        extradata = self.objdir_get_extradata(image)
+        ii = extradata.get('ii', 0)
+
         itk_image = helper.vtkjs_to_itk_image(image)
 
         print('segment at:', point)
 
         ii += 1
+        extradata['ii'] = ii
+        print(id(image), extradata)
 
         bx = random.randint(0, 50)
         by = random.randint(0, 50)

@@ -204,12 +204,17 @@ def objdir_wrap(func):
 class ObjectProtocol(LinkProtocol):
     def __init__(self):
         super(ObjectProtocol, self).__init__()
-        self.objdir = {}
+        self._objdir = {}
+        self._obj_extradata = {}
 
     def objdir_get(self, guid):
-        if guid in self.objdir:
-            return self.objdir[guid]
+        if guid in self._objdir:
+            return self._objdir[guid]
         raise Exception('No object with guid {}'.format(guid))
+
+    def objdir_get_extradata(self, obj):
+        obj_id = id(obj)
+        return self._obj_extradata.get(obj_id, None)
 
     @rpc('objdir_put')
     def objdir_put(self, obj, guid=None):
@@ -217,7 +222,9 @@ class ObjectProtocol(LinkProtocol):
             obj = unpack_data_arrays(obj)
         if guid is None:
             guid = make_guid()
-        self.objdir[guid] = obj
+        self._objdir[guid] = obj
+        # obj's lifetime is forever
+        self._obj_extradata[id(obj)] = {}
         return guid
 
 # Uses twisted's global reactor to schedule a call
