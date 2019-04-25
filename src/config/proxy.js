@@ -20,6 +20,8 @@ import proxyLinks from 'paraview-glance/src/config/proxyLinks';
 import proxyFilter from 'paraview-glance/src/config/proxyFilter';
 import proxyViewRepresentationMapping from 'paraview-glance/src/config/proxyViewRepresentationMapping';
 
+import vtkTubeGroupRepresentationProxy from 'paraview-glance/src/models/TubeGroupRepresentationProxy';
+
 const { createProxyDefinition, activateOnCreate } = ConfigUtils;
 
 function createDefaultView(classFactory, ui, options, props) {
@@ -77,6 +79,11 @@ export default {
         vtkGeometryRepresentationProxy,
         proxyUI.Geometry,
         proxyLinks.Geometry
+      ),
+      TubeGroup: createProxyDefinition(
+        vtkTubeGroupRepresentationProxy,
+        proxyUI.TubeGroup,
+        proxyLinks.TubeGroup
       ),
       Skybox: createProxyDefinition(
         vtkSkyboxRepresentationProxy,
@@ -171,6 +178,7 @@ export default {
   },
   filters: {
     vtkPolyData: [],
+    vtkTubeGroup: [],
     vtkImageData: ['Contour'],
     vtkMolecule: [],
     Glyph: [],

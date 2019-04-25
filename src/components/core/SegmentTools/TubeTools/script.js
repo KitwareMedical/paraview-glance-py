@@ -93,7 +93,8 @@ export default {
           console.log(ev.position);
           // ev.pokedRenderer.getRenderWindow().getInteractor().getContainer()
         });
-      } else { // 3D view
+      } else {
+        // 3D view
         const interactor = view.getRenderWindow().getInteractor();
         cellPicker.setPickFromList(1);
         interactor.setPicker(cellPicker);
@@ -122,11 +123,27 @@ export default {
       }
     },
     toggleTubeVisibility(tubeId) {
-      this.inputData;
+      if (this.inputData) {
+        const { tubes } = this.inputData;
+        const color = tubes.get(tubeId).color.slice();
+        color[3] = 1 - color[3]; // alpha color is in [0, 1]
+        tubes.setColor(tubeId, color);
+        this.refreshTubeUI();
+      }
     },
     refreshTubeUI() {
       const { tubes, tubeSource } = this.inputData;
-      tubeSource.setInputData(tubes.getTubePolyData());
+      tubeSource.setInputData(tubes.getTubeGroup());
+
+      const reps = this.proxyManager
+        .getRepresentations()
+        .filter((r) => r.getInput() === this.inputData.tubeSource);
+
+      for (let i = 0; i < reps.length; i++) {
+        reps[i].setColorBy('Colors', 'cellData');
+      }
+
+      this.proxyManager.renderAllViews();
       this.$forceUpdate();
     },
     segmentAtClick(position, view) {

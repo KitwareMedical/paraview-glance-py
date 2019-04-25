@@ -1,7 +1,9 @@
+/* eslint-disable import/no-named-as-default-member */
 import { mapState } from 'vuex';
 import vtk from 'vtk.js/Sources/vtk';
 import macro from 'vtk.js/Sources/macro';
-import vtkPolyData from 'vtk.js/Sources/Common/DataModel/PolyData';
+
+import vtkTubeGroup from 'paraview-glance/src/models/TubeGroup';
 
 import PreProcess from './PreProcess';
 import TubeTools from './TubeTools';
@@ -65,7 +67,7 @@ export default {
           }
         );
 
-        tubeSource.setInputData(vtkPolyData.newInstance());
+        tubeSource.setInputData(vtkTubeGroup.newInstance());
         this.proxyManager.createRepresentationInAllViews(tubeSource);
 
         this.pipelines.set(source, {
@@ -93,7 +95,6 @@ export default {
             name: `Pre-processed ${this.master.getName()}`,
           }
         );
-        source.setInputData(vtkPolyData.newInstance());
         pipeline.postProcessed = source;
 
         // re-activate previous active source

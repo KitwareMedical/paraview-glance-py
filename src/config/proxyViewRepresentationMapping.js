@@ -1,5 +1,6 @@
 const View3D = {
   vtkPolyData: { name: 'Geometry' },
+  vtkTubeGroup: { name: 'TubeGroup' },
   vtkImageData: { name: 'Volume' },
   vtkLabelMap: { name: 'LabelMapVolume' },
   vtkMolecule: { name: 'Molecule' },
@@ -9,6 +10,7 @@ const View3D = {
 
 const View2D = {
   vtkPolyData: { name: 'Geometry' },
+  vtkTubeGroup: { name: 'TubeGroup' },
   vtkImageData: { name: 'Slice' },
   vtkLabelMap: { name: 'LabelMapSlice' },
   vtkMolecule: { name: 'Molecule' },

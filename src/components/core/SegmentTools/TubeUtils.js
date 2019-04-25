@@ -1,3 +1,4 @@
+/* eslint-disable import/no-named-as-default-member */
 import vtkDataArray from 'vtk.js/Sources/Common/Core/DataArray';
 import vtkPoints from 'vtk.js/Sources/Common/Core/Points';
 import vtkPolyData from 'vtk.js/Sources/Common/DataModel/PolyData';
@@ -5,6 +6,8 @@ import vtkTubeFilter from 'vtk.js/Sources/Filters/General/TubeFilter';
 import vtkAppendPolyData from 'vtk.js/Sources/Filters/General/AppendPolyData';
 import { VaryRadius } from 'vtk.js/Sources/Filters/General/TubeFilter/Constants';
 import { VtkDataTypes } from 'vtk.js/Sources/Common/Core/DataArray/Constants';
+
+import vtkTubeGroup from 'paraview-glance/src/models/TubeGroup';
 
 export function centerlineToTube(centerline) {
   const pd = vtkPolyData.newInstance();
@@ -97,15 +100,15 @@ export class TubeCollection {
     this.map = {};
     this.tubeCache = {};
     this.cellToTubeId = []; // [ [# of cells before, tube id], ... ]
-    this.polydata = vtkPolyData.newInstance();
+    this.tubeGroup = vtkTubeGroup.newInstance();
   }
 
   getAll() {
     return this.order;
   }
 
-  getTubePolyData() {
-    return this.polydata;
+  getTubeGroup() {
+    return this.tubeGroup;
   }
 
   get(id) {
@@ -154,6 +157,14 @@ export class TubeCollection {
     }
   }
 
+  setColor(id, color4) {
+    const index = this.map[id];
+    if (index !== undefined) {
+      this.order[index].color = color4.slice();
+      this.rebuild();
+    }
+  }
+
   findTubeFromCell(cellId) {
     for (let i = 0; i < this.cellToTubeId.length; i++) {
       const [cellIdThreshold, tubeId] = this.cellToTubeId[i];
@@ -175,7 +186,9 @@ export class TubeCollection {
       numberOfCells += tubePd.getNumberOfCells();
     }
 
-    this.polydata = filter.getOutputData();
+    this.tubeGroup = vtkTubeGroup.newInstance({
+      internalPolyData: filter.getOutputData(),
+    });
 
     // add colors
     const colorsData = new Uint8Array(4 * numberOfCells);
@@ -197,7 +210,7 @@ export class TubeCollection {
       numberOfComponents: 4,
     });
 
-    this.polydata.getCellData().addArray(colors);
+    this.tubeGroup.getCellData().addArray(colors);
 
     // rebuild cellToTubeId
     this.cellToTubeId = new Array(this.order.length);

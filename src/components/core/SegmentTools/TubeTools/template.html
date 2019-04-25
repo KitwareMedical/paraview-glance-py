@@ -27,8 +27,13 @@
     >
       <v-list-tile :key="tube.id">
         <v-list-tile-avatar>
-          <v-btn icon>
-            <v-icon color="grey">visibility</v-icon>
+          <v-btn
+            icon
+            @click="toggleTubeVisibility(tube.id)"
+          >
+            <v-icon color="grey">
+              {{ tube.color[3] === 1 ? 'visibility' : 'visibility_off' }}
+            </v-icon>
           </v-btn>
         </v-list-tile-avatar>
         <v-list-tile-content>

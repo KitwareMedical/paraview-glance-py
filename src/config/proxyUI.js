@@ -77,6 +77,16 @@ const Geometry = [
   },
 ];
 
+const TubeGroup = [
+  {
+    name: 'opacity',
+    domain: { min: 0, max: 1, step: 0.01 },
+  },
+  {
+    name: 'visibility',
+  },
+];
+
 const Slice = [
   {
     name: 'visibility',
@@ -170,6 +180,7 @@ const Skybox = [{ name: 'position' }];
 export default {
   Volume,
   Geometry,
+  TubeGroup,
   Slice,
   Molecule,
   Glyph,
