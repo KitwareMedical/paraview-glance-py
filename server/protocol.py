@@ -28,27 +28,32 @@ class Protocol(helper.ObjectProtocol):
     @helper.objdir_wrap
     def segment(self, image, point, scale):
         extradata = self.objdir_get_extradata(image)
-        ii = extradata.get('ii', 0)
 
         itk_image = helper.vtkjs_to_itk_image(image)
+        # maybe I should have a set of associated data...?
+        itk_image = itk.CastImageFilter[type(itk_image), itk.Image[itk.F, 3]].New()(itk_image)
 
-        print('segment at:', point)
+        if 'segmenter' not in extradata:
+            extradata['segmenter'] = itk.TubeTK.SegmentTubes[type(itk_image)].New()
+            extradata['segmenter'].SetInputImage(itk_image)
 
-        ii += 1
-        extradata['ii'] = ii
-        print(id(image), extradata)
+        segmenter = extradata['segmenter']
 
-        bx = random.randint(0, 50)
-        by = random.randint(0, 50)
-        bz = random.randint(0, 50)
+        next_tube_id = extradata.get('next_tube_id', 1)
+        tube = segmenter.ExtractTube(point, next_tube_id, True)
+        if tube:
+            tube_points = []
+            for i in range(tube.GetNumberOfPoints()):
+                point = tube.GetPoint(i)
+                tube_points.append({
+                    'point': list(point.GetPositionInObjectSpace()),
+                    'radius': point.GetRadiusInObjectSpace(),
+                })
 
-        return {
-            'id': ii,
-            'points': [
-                { 'point': [bx, by+4, bz+4], 'radius': 3 },
-                { 'point': [bx+1, by+11, bz+11], 'radius': 4 },
-                { 'point': [bx+1, by+15, bz+15], 'radius': 4 },
-                { 'point': [bx, by+18, bz+18], 'radius': 3 },
-                { 'point': [bx, by+24, bz+24], 'radius': 4 },
-            ],
-        }
+            extradata['next_tube_id'] = next_tube_id + 1
+
+            return {
+                'id': tube.GetId(),
+                'points': tube_points,
+            }
+        return None

@@ -160,8 +160,10 @@ export default {
       return this.remote
         .call('segment', dataset, pointPicker.getPointIJK(), this.scale)
         .then((centerline) => {
-          const { tubes, tubeSource } = this.inputData;
-          tubes.put(centerline);
+          if (centerline) {
+            const { tubes, tubeSource } = this.inputData;
+            tubes.put(centerline);
+          }
 
           this.refreshTubeUI();
         });
