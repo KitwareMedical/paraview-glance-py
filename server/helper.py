@@ -71,7 +71,7 @@ def _itk_image_to_type(itkimage):
     }
     return _python_to_js[mangle]
 
-def itk_to_vtkjs_image(itk_image, name='Default Name'):
+def itk_to_vtkjs_image(itk_image):
     dims = list(itk_image.GetLargestPossibleRegion().GetSize())
     extent = []
     for v in dims:
@@ -82,7 +82,6 @@ def itk_to_vtkjs_image(itk_image, name='Default Name'):
 
     return {
         'vtkClass': 'vtkImageData',
-        'name': name,
         'dataDescription': 8, # StructuredData.XYZ_GRID from vtk.js
         'spacing': list(itk_image.GetSpacing()),
         'origin': list(itk_image.GetOrigin()),

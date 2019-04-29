@@ -19,9 +19,7 @@ class Protocol(helper.ObjectProtocol):
         result = median_filter.GetOutput()
 
         # maybe auto-serialize in objdir_wrap?
-        return helper.itk_to_vtkjs_image(
-                result,
-                'Median filter of {}'.format(image['name']))
+        return helper.itk_to_vtkjs_image(result)
 
     @rpc('segment')
     @helper.deferResults
