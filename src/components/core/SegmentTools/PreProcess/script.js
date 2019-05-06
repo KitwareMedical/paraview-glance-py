@@ -20,7 +20,11 @@ export default {
       this.loading = true;
 
       this.remote
-        .call('median_filter', dataset, this.medianRadius)
+        .call(
+          'median_filter',
+          this.remote.persist(dataset),
+          this.medianRadius
+        )
         .then((vtkResult) => {
           this.loading = false;
           this.$emit('outputImage', vtk(vtkResult));

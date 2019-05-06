@@ -118,6 +118,8 @@ export default {
     deleteTube(tubeId) {
       // TODO delete tube server-side
       if (this.inputData) {
+        const { source } = this.inputData;
+        const dataset = source.getDataset();
         this.inputData.tubes.delete(tubeId);
         this.refreshTubeUI();
       }

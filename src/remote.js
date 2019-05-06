@@ -1,5 +1,7 @@
 import WebsocketConnection from 'paraview-glance/wslink/js/src/WebsocketConnection';
 
+import serialize from 'paraview-glance/src/serialize';
+
 function defer() {
   let resolve;
   let reject;
@@ -24,41 +26,13 @@ function setCallback(arr, cb) {
   };
 }
 
-/**
- * Walks an object tree and converts any vtkDataArrays to
- * a wslink attachment.
- *
- * This mutates the given object.
- */
-function extractVtkAttachments(obj, session) {
-  function extract(o) {
-    if (o === null || o === undefined) {
-      return;
-    }
-
-    if (o.vtkClass && o.vtkClass === 'vtkDataArray') {
-      const attachment = new window[o.dataType](o.values).buffer;
-      /* eslint-disable-next-line no-param-reassign */
-      o.values = session.addAttachment(attachment);
-    } else if (typeof o === 'object') {
-      const keys = Object.keys(o);
-      for (let i = 0; i < keys.length; i++) {
-        extract(o[keys[i]]);
-      }
-    }
-  }
-
-  extract(obj);
-  return obj;
-}
-
 function connect(endpoint) {
   const cbs = {
     ready: [],
     error: [],
   };
 
-  // obj -> { guid, dirty }
+  // obj -> guid
   const objDir = new WeakMap();
 
   // resultId -> deferred
@@ -95,51 +69,13 @@ function connect(endpoint) {
     call: (rpcEndpoint, ...args) =>
       pSession.then((session) => {
         const promisedArgs = args.map((arg) => {
-          if (arg && arg.isA && arg.isA('vtkObject')) {
-            // see if objdir has the vtk object
-            if (objDir.has(arg)) {
-              const { pending, guid, dirty } = objDir.get(arg);
-              // obj is already being uploaded, so wait
-              if (pending) {
-                return pending.promise;
-              }
-              // obj is not dirty, so return guid
-              if (!dirty) {
-                return Promise.resolve({
-                  __objguid__: guid,
-                });
-              }
-            }
-
-            // obj is either dirty or not uploaded, so upload it
-            const serialized = arg.getState();
-            extractVtkAttachments(serialized, session);
-
-            objDir.set(arg, {
-              pending: defer(),
-              guid: null,
-              dirty: false,
-            });
-
-            // null GUID means to generate a new GUID server-side
-            return api.call('objdir_put', serialized, null).then((guid) => {
-              const { pending } = objDir.get(arg);
-              const retval = {
-                __objguid__: guid,
-              };
-              pending.resolve(retval);
-
-              objDir.set(arg, {
-                pending: null,
-                guid,
-                dirty: false,
-              });
-
-              return retval;
-            });
+          if (arg instanceof Promise) {
+            return arg.then((uid) => ({
+              __uid__: uid,
+            }));
           }
-          // passthrough arg
-          return Promise.resolve(arg);
+
+          return serialize.transform(arg, session.addAttachment);
         });
 
         return Promise.all(promisedArgs)
@@ -149,16 +85,27 @@ function connect(endpoint) {
               const resultId = result.$deferredResultId;
               const deferred = defer();
               deferredWaitlist.set(resultId, deferred);
-              return deferred.promise;
+              return deferred.promise.then((deferredResult) =>
+                serialize.transform(deferredResult)
+              );
             }
-            return result;
+            return serialize.transform(result);
           });
       }),
-    markDirty(targetObject) {
-      if (targetObject && objDir.has(targetObject)) {
-        const state = objDir.get(targetObject);
-        objDir.set(targetObject, Object.assign(state, { dirty: true }));
+    // markDirty(targetObject) {
+    //   if (targetObject && objDir.has(targetObject)) {
+    //     const state = objDir.get(targetObject);
+    //     objDir.set(targetObject, Object.assign(state, { dirty: true }));
+    //   }
+    // },
+    persist: (obj) => {
+      if (objDir.has(obj)) {
+        return Promise.resolve(objDir.get(obj));
       }
+      return api.call('persist_object', obj).then((uid) => {
+        objDir.set(obj, uid);
+        return uid;
+      });
     },
   };
 
