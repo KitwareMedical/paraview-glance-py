@@ -61,34 +61,26 @@ function connect(endpoint) {
           deferredWaitlist.set(deferredId, deferred);
           return deferred.promise;
         } else {
-          throw new Error('Received deferred data, but no consumers');
+          return Promise.reject(
+            new Error('Received deferred data, but no consumers')
+          );
         }
       }
 
-      const transformedData = serialize.transform(data);
+      return serialize.transform(data).then((transformedData) => {
+        if (uid) {
+          objDir.set(transformedData, uid);
+        }
 
-      if (uid) {
-        objDir.set(transformedData, uid);
-      }
+        if (deferred) {
+          deferred.resolve(transformedData);
+          return deferred.promise;
+        }
 
-      if (deferred) {
-        deferred.resolve(transformedData);
-        return deferred.promise;
-      }
-
-      return transformedData;
+        return transformedData;
+      });
     }
-    return null;
-
-    // if (result && result.$deferredResultId) {
-    //   const resultId = result.$deferredResultId;
-    //   const deferred = defer();
-    //   deferredWaitlist.set(resultId, deferred);
-    //   return deferred.promise.then((deferredResult) =>
-    //     serialize.transform(deferredResult)
-    //   );
-    // }
-    // return serialize.transform(result);
+    return Promise.reject(new Error('No result from server'));
   }
 
   // connection lifecycle callbacks
@@ -107,11 +99,17 @@ function connect(endpoint) {
         const promisedArgs = args.map((arg) => {
           if (arg instanceof Promise) {
             return arg.then((uid) => ({
-              __uid__: uid,
+              uid,
+              data: null,
             }));
           }
 
-          return serialize.transform(arg, session.addAttachment);
+          return serialize
+            .transform(arg, session.addAttachment)
+            .then((data) => ({
+              uid: null,
+              data,
+            }));
         });
 
         return Promise.all(promisedArgs)

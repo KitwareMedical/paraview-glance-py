@@ -34,19 +34,27 @@ class Api(LinkProtocol):
         new_kwargs = {}
 
         for arg in args:
-            if type(arg) is dict and '__uid__' in arg:
-                uid = arg['__uid__']
-                new_args.append(self._cache.get(uid, None))
+            if type(arg) is dict:
+                uid = arg['uid']
+                data = arg['data']
+                if uid is None:
+                    new_args.append(transform(data))
+                else:
+                    new_args.append(self._cache.get(uid, None))
             else:
-                new_args.append(transform(arg))
+                raise Exception('Unknown argument format')
 
         for key in kwargs:
             kwarg = kwargs[key]
-            if type(kwarg) is dict and '__uid__' in kwarg:
-                uid = kwarg['__uid__']
-                new_kwargs[key] = self._cache.get(uid, None)
+            if type(kwarg) is dict:
+                uid = kwarg['uid']
+                data = kwarg['data']
+                if uid is None:
+                    new_kwargs[key] = transform(data)
+                else:
+                    new_kwargs[key] = self._cache.get(uid, None)
             else:
-                new_kwargs[key] = transform(kwarg)
+                raise Exception('Unknown argument format')
 
         return new_args, new_kwargs
 
