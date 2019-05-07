@@ -36,7 +36,7 @@ function forEachDataArray(obj, callback) {
 
 const adapters = [
   function vtkDataSet(obj, addAttachment) {
-    if (typeof obj === 'object' && obj.isA && obj.isA('vtkDataSet')) {
+    if (obj && typeof obj === 'object' && obj.isA && obj.isA('vtkDataSet')) {
       return forEachDataArray(obj.getState(), (ds, assign) => {
         const attachment = new window[ds.dataType](ds.values).buffer;
         assign(

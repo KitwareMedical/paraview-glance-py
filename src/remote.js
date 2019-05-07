@@ -47,21 +47,57 @@ function connect(endpoint) {
     ws.connect();
   });
 
+  function handleResult(result) {
+    if (result) {
+      const { uid, data, deferredId } = result;
+      let deferred = null;
+
+      if (deferredId) {
+        if (data && deferredWaitlist.has(deferredId)) {
+          deferred = deferredWaitlist.get(deferredId);
+          deferredWaitlist.delete(deferredId);
+        } else if (!data) {
+          deferred = defer();
+          deferredWaitlist.set(deferredId, deferred);
+          return deferred.promise;
+        } else {
+          throw new Error('Received deferred data, but no consumers');
+        }
+      }
+
+      const transformedData = serialize.transform(data);
+
+      if (uid) {
+        objDir.set(transformedData, uid);
+      }
+
+      if (deferred) {
+        deferred.resolve(transformedData);
+        return deferred.promise;
+      }
+
+      return transformedData;
+    }
+    return null;
+
+    // if (result && result.$deferredResultId) {
+    //   const resultId = result.$deferredResultId;
+    //   const deferred = defer();
+    //   deferredWaitlist.set(resultId, deferred);
+    //   return deferred.promise.then((deferredResult) =>
+    //     serialize.transform(deferredResult)
+    //   );
+    // }
+    // return serialize.transform(result);
+  }
+
+  // connection lifecycle callbacks
   pSession
     .then((session) => cbs.ready.forEach((cb) => cb(session)))
     .catch((error) => cbs.error.forEach((cb) => cb(error)));
 
   // handle deferred results
-  pSession.then((session) => {
-    session.subscribe('defer.results', (deferredResult) => {
-      const { $resultId, $results } = deferredResult[0];
-      if (deferredWaitlist.has($resultId)) {
-        const deferred = deferredWaitlist.get($resultId);
-        deferredWaitlist.delete($resultId);
-        deferred.resolve($results);
-      }
-    });
-  });
+  pSession.then((session) => session.subscribe('defer.results', handleResult));
 
   const api = {
     onready: (cb) => setCallback(cbs.ready, cb),
@@ -80,17 +116,7 @@ function connect(endpoint) {
 
         return Promise.all(promisedArgs)
           .then((newArgs) => session.call(rpcEndpoint, newArgs))
-          .then((result) => {
-            if (result && result.$deferredResultId) {
-              const resultId = result.$deferredResultId;
-              const deferred = defer();
-              deferredWaitlist.set(resultId, deferred);
-              return deferred.promise.then((deferredResult) =>
-                serialize.transform(deferredResult)
-              );
-            }
-            return serialize.transform(result);
-          });
+          .then(handleResult);
       }),
     // markDirty(targetObject) {
     //   if (targetObject && objDir.has(targetObject)) {

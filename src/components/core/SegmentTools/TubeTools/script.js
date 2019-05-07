@@ -47,6 +47,7 @@ export default {
       enabled: false,
       scale: 2,
       pendingSegs: 0,
+      readyPromise: Promise.resolve(),
     };
   },
   computed: {
@@ -59,6 +60,16 @@ export default {
     inputData(data) {
       if (!data) {
         this.enabled = false;
+      }
+    },
+    enabled(state) {
+      if (state) {
+        const source = this.inputData.postProcessed;
+        const dataset = source.getDataset();
+        this.readyPromise = this.remote.call(
+          'set_segment_image',
+          this.remote.persist(dataset)
+        );
       }
     },
   },
@@ -75,9 +86,10 @@ export default {
         onClick(interactor, 'left', (ev) => {
           if (this.ready) {
             this.pendingSegs++;
-            this.segmentAtClick(ev.position, view).then(() => {
-              this.pendingSegs--;
-            });
+            this.segmentAtClick(ev.position, view)
+              .finally(() => {
+                this.pendingSegs--;
+              });
           }
         });
 
@@ -158,9 +170,8 @@ export default {
 
       pointPicker.pick(point, view.getRenderer());
 
-      const dataset = source.getDataset();
-      return this.remote
-        .call('segment', dataset, pointPicker.getPointIJK(), this.scale)
+      return this.readyPromise.then(() => this.remote
+        .call('segment', pointPicker.getPointIJK(), this.scale)
         .then((centerline) => {
           if (centerline) {
             const { tubes, tubeSource } = this.inputData;
@@ -168,7 +179,8 @@ export default {
           }
 
           this.refreshTubeUI();
-        });
+        })
+      );
     },
     tryPickTube(position, view) {
       const { tubeSource, tubes } = this.inputData;

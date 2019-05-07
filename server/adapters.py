@@ -224,6 +224,17 @@ def itk_to_vtk_image(itk_image, addAttachment):
         },
     }
 
-@adapter(lambda o: type(o) == itk.Tube)
+@adapter(lambda o: type(o).__name__ == 'itkTubeSpatialObject3')
 def serialize_tube(tube):
-    pass    
+    tube_points = []
+    for i in range(tube.GetNumberOfPoints()):
+        point = tube.GetPoint(i)
+        tube_points.append({
+            'point': list(point.GetPositionInObjectSpace()),
+            'radius': point.GetRadiusInObjectSpace(),
+        })
+
+    return {
+        'id': tube.GetId(),
+        'points': tube_points,
+    }

@@ -27,36 +27,23 @@ class SegmentApi(Api):
 
         result = median_filter.GetOutput()
 
+        # TODO no delete semantics
+        self.persist(result)
         return result
 
     @rpc('set_segment_image')
     def set_segment_image(self, image):
-        self.segmenter = itk.TubeTK.SegmentTubes[type(itk_image)].New()
-        self.segmenter.SetInputImage(image)
+        if image != self.input_image:
+            self.input_image = image
+            self.segmenter = itk.TubeTK.SegmentTubes[type(image)].New()
+            self.segmenter.SetInputImage(image)
 
     @rpc('segment')
     def segment(self, position, scale):
         if self.segmenter is None:
             raise Exception('segment image is not set')
 
-        tube = self.segmenter.ExtractTube(point, self.next_tube_id, True)
+        tube = self.segmenter.ExtractTube(position, self.next_tube_id, True)
         self.next_tube_id += 1
 
         return tube
-
-        if tube:
-            tube_points = []
-            for i in range(tube.GetNumberOfPoints()):
-                point = tube.GetPoint(i)
-                tube_points.append({
-                    'point': list(point.GetPositionInObjectSpace()),
-                    'radius': point.GetRadiusInObjectSpace(),
-                })
-
-            self.next_tube_id += 1
-
-            return {
-                'id': tube.GetId(),
-                'points': tube_points,
-            }
-        return None
