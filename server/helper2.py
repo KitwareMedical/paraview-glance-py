@@ -63,6 +63,11 @@ class Api(LinkProtocol):
         self._cache[uid] = obj
         self._persistent_objects[obj] = uid
 
+    def unpersist(self, obj):
+        uid = self._persistent_objects[obj]
+        del self._persistent_objects[obj]
+        del self._cache[uid]
+
     def get_persistent_uid(self, obj):
         try:
             return self._persistent_objects.get(obj, None)

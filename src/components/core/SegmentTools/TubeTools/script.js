@@ -78,7 +78,7 @@ export default {
     forAllViews(this.proxyManager, (view) => {
       if (view.isA('vtkView2DProxy')) {
         const interactor = view.getRenderWindow().getInteractor();
-        cellPicker.setPickFromList(1);
+        pointPicker.setPickFromList(1);
         interactor.setPicker(pointPicker);
 
         // left mouse click
