@@ -47,6 +47,16 @@ export default {
       enabled: false,
       scale: 2,
       pendingSegs: 0,
+      selectedTubes: {
+        order: [],
+        map: {},
+      },
+      tubeSizes: [
+        { size: 'Small', args: { ridge: 1, radius: 1 } },
+        { size: 'Medium', args: { ridge: 2, radius: 2 } },
+        { size: 'Large', args: { ridge: 4, radius: 4 } },
+        { size: 'Huge', args: { ridge: 8, radius: 8 } },
+      ],
       readyPromise: Promise.resolve(),
     };
   },
@@ -121,6 +131,27 @@ export default {
     });
   },
   methods: {
+    selectTube(tubeId) {
+      if (this.selectedTubes.map[tubeId] === undefined) {
+        const idx = this.selectedTubes.order.length;
+        this.selectedTubes.map[tubeId] = idx;
+        this.selectedTubes.order.push(tubeId);
+      }
+    },
+    deselectTube(tubeId) {
+      const idx = this.selectedTubes.map[tubeId];
+      if (idx !== undefined) {
+        this.selectedTubes.order.splice(idx, 1);
+        delete this.selectedTubes.map[tubeId];
+      }
+    },
+    isTubeSelected(tubeId) {
+      return this.selectedTubes.map[tubeId] !== undefined;
+    },
+    clearSelection() {
+      this.selectedTubes.map = {};
+      this.selectedTubes.order = [];
+    },
     listTubes() {
       if (this.inputData) {
         return this.inputData.tubes.getAll();
@@ -197,6 +228,12 @@ export default {
         const tubeId = tubes.findTubeFromCell(cellId);
         if (tubeId > -1) {
           console.log('Found tube', tubeId);
+
+          if (this.isTubeSelected(tubeId)) {
+            this.deselectTube(tubeId);
+          } else {
+            this.selectTube(tubeId);
+          }
 
           // get closest point on centerline
           // probably do this on python side

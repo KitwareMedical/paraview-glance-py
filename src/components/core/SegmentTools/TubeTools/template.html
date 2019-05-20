@@ -1,12 +1,32 @@
 <v-container :class="[$style.container, 'grid-list-lg']">
-  <v-layout row wrap>
-    <v-flex xs12>
+  <v-layout row wrap align-center>
+    <v-flex xs6>
       <v-switch
         v-model="enabled"
-        label="Segment Mode"
+        label="Extract"
         :disabled="!inputData"
       />
     </v-flex>
+    <v-flex xs6>
+      <v-checkbox
+        :disabled="!inputData"
+        label="Use Preprocessed"
+      />
+    </v-flex>
+    <v-flex xs6>
+      <v-select
+        label="Tube Size"
+        :items="tubeSizes"
+        item-text="size"
+        item-value="size"
+        return-object
+        hide-details
+      />
+    </v-flex>
+    <v-flex xs6>
+      <v-checkbox label="Use dynamic scale" hide-details />
+    </v-flex>
+    <!--
     <v-flex xs10>
       <v-slider
         v-model="scale"
@@ -26,42 +46,42 @@
         v-model="scale"
       />
     </v-flex>
+    -->
   </v-layout>
+  <div>
+    <span class="body-2">Status: </span>
+    <span>{{ pendingSegs > 0 ? `${pendingSegs} segmenting...` : "Ready" }}</span>
+  </div>
+  <div>
+    <span class="body-2">Number of tubes: </span>
+    <span>{{ listTubes().length }}</span>
+  </div>
   <v-list>
-    <v-subheader>Tubes</v-subheader>
+    <v-subheader>Selected Tubes</v-subheader>
     <v-divider />
-    <template v-if="listTubes().length === 0 && pendingSegs === 0">
+    <template v-if="selectedTubes.length === 0">
       <v-list-tile>
         <v-list-tile-content
           class="grey--text"
-          :style="{ 'align-items': 'center' }"
+          style="align-items: center"
         >
-          No tubes yet
+          Click on tubes to select
         </v-list-tile-content>
       </v-list-tile>
       <v-divider />
     </template>
     <template
-      v-for="tube in listTubes()"
+      v-else
+      v-for="tubeId in selectedTubes.order"
     >
-      <v-list-tile :key="tube.id">
-        <v-list-tile-avatar>
-          <v-btn
-            icon
-            @click="toggleTubeVisibility(tube.id)"
-          >
-            <v-icon color="grey">
-              {{ tube.color[3] === 1 ? 'visibility' : 'visibility_off' }}
-            </v-icon>
-          </v-btn>
-        </v-list-tile-avatar>
+      <v-list-tile :key="tubeId">
         <v-list-tile-content>
-          {{ tube.points.length }} points
+          Tube #{{ tubeId }}
         </v-list-tile-content>
         <v-list-tile-action>
           <v-btn
             icon
-            @click="deleteTube(tube.id)"
+            @click="deleteTube(tubeId)"
           >
             <v-icon color="grey">delete</v-icon>
           </v-btn>
@@ -69,14 +89,5 @@
       </v-list-tile>
       <v-divider />
     </template>
-    <v-list-tile v-show="pendingSegs > 0">
-      <v-list-tile-avatar>
-        <v-progress-circular indeterminate />
-      </v-list-tile-avatar>
-      <v-list-tile-content>
-        {{ pendingSegs }} segmenting...
-      </v-list-tile-content>
-    </v-list-tile>
-    <v-divider />
   </v-list>
 </v-container>
