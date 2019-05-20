@@ -119,26 +119,19 @@ export class TubeCollection {
     return null;
   }
 
-  put(centerline) {
-    if (!('id' in centerline)) {
-      throw new Error('Centerline has no id property');
+  put(tube) {
+    if (!('id' in tube)) {
+      throw new Error('Tube has no id property');
     }
 
-    const id = centerline.id;
+    const id = tube.id;
     const index = this.map[id];
     if (index === undefined) {
-      const c = Object.assign(
-        {
-          color: [1, 0, 0, 1], // default red color
-        },
-        centerline
-      );
-
       this.map[id] = this.order.length;
-      this.order.push(c);
+      this.order.push(tube);
 
-      const tube = centerlineToTube(centerline.points);
-      this.tubeCache[id] = convertStripsToPolys(tube);
+      const tubePoly = centerlineToTube(tube.points);
+      this.tubeCache[id] = convertStripsToPolys(tubePoly);
       this.rebuild();
     }
   }
