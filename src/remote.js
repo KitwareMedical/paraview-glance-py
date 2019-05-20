@@ -138,6 +138,14 @@ function connect(endpoint) {
         return uid;
       });
     },
+    delete: (obj) => {
+      if (objDir.has(obj)) {
+        return api.call('delete_object', obj).then(() => {
+          objDir.delete(obj);
+        });
+      }
+      return Promise.resolve();
+    },
   };
 
   return api;

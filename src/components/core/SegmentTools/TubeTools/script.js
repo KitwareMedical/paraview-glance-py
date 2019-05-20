@@ -161,10 +161,11 @@ export default {
     deleteTube(tubeId) {
       // TODO delete tube server-side
       if (this.inputData) {
-        const { source } = this.inputData;
-        const dataset = source.getDataset();
-        this.inputData.tubes.delete(tubeId);
-        this.refreshTubeUI();
+        this.remote.call('delete_tube', this.inputData.tubes.get(tubeId)).then(() => {
+          this.inputData.tubes.delete(tubeId);
+          this.deselectTube(tubeId);
+          this.refreshTubeUI();
+        });
       }
     },
     toggleTubeVisibility(tubeId) {

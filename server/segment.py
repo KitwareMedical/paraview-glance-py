@@ -31,7 +31,6 @@ class SegmentApi(Api):
             median_filter.Update()
             result = median_filter.GetOutput()
 
-        # TODO no delete semantics
         self.persist(result)
         return result
 
@@ -48,6 +47,15 @@ class SegmentApi(Api):
             raise Exception('segment image is not set')
 
         tube = self.segmenter.ExtractTube(position, self.next_tube_id, True)
-        self.next_tube_id += 1
+        if tube is not None:
+            self.next_tube_id += 1
+            self.persist(tube)
+            return tube
 
-        return tube
+    @rpc('delete_tube')
+    def delete_tube(self, tube):
+        if self.segmenter is None:
+            raise Exception('segment image is not set')
+
+        self.segmenter.DeleteTube(tube)
+        self.delete(tube)

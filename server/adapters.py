@@ -237,4 +237,5 @@ def serialize_tube(tube):
     return {
         'id': tube.GetId(),
         'points': tube_points,
+        'color': list(tube.GetProperty().GetColor()),
     }

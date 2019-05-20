@@ -63,10 +63,11 @@ class Api(LinkProtocol):
         self._cache[uid] = obj
         self._persistent_objects[obj] = uid
 
-    def unpersist(self, obj):
-        uid = self._persistent_objects[obj]
-        del self._persistent_objects[obj]
-        del self._cache[uid]
+    def delete(self, obj):
+        if obj in self._persistent_objects:
+            uid = self._persistent_objects[obj]
+            del self._persistent_objects[obj]
+            del self._cache[uid]
 
     def get_persistent_uid(self, obj):
         try:
@@ -76,12 +77,13 @@ class Api(LinkProtocol):
 
     @rpc('persist_object')
     def persist_object(self, obj):
-        '''RPC and internal use only'''
+        '''RPC use only'''
         uid = str(uuid.uuid4())
         self._cache[uid] = obj
         return uid
 
-    @rpc('delete_persistent')
-    def delete_persistent(self, uid):
+    @rpc('delete_object')
+    def delete_object(self, uid):
+        '''RPC use only'''
         if uid in self._cache:
             del self._cache[uid]
