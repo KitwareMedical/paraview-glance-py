@@ -104,6 +104,13 @@ function connect(endpoint) {
             }));
           }
 
+          if (objDir.has(arg)) {
+            return Promise.resolve({
+              uid: objDir.get(arg),
+              data: null,
+            });
+          }
+
           return serialize
             .transform(arg, session.addAttachment)
             .then((data) => ({

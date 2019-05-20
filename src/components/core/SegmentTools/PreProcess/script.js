@@ -8,7 +8,20 @@ export default {
   props: ['inputSource'],
   data() {
     return {
-      medianRadius: 1,
+      filters: ['windowLevel', 'median'],
+      enabled: {
+        windowLevel: false,
+        median: false,
+      },
+      params: {
+        windowLevel: {
+          window: 255,
+          level: 127,
+        },
+        median: {
+          radius: 1,
+        },
+      },
       loading: false,
     };
   },
@@ -17,18 +30,29 @@ export default {
     run() {
       const dataset = this.inputSource.getDataset();
 
-      this.loading = true;
+      // persist dataset on server b/c it won't change
+      this.remote.persist(dataset);
 
-      this.remote
-        .call(
-          'median_filter',
-          this.remote.persist(dataset),
-          this.medianRadius
-        )
-        .then((vtkResult) => {
-          this.loading = false;
-          this.$emit('outputImage', vtk(vtkResult));
-        });
+      // TODO window-level params are from the 2d representations
+
+      const args = this.filters
+        .filter((name) => this.enabled[name])
+        .map((filter) => Object.assign({ filter }, this.params[filter]));
+
+      if (args.length) {
+        this.loading = true;
+        this.remote
+          .call('preprocess', dataset, args)
+          .then((vtkResult) => {
+            // TODO vtk() call in serialize.js
+            this.$emit('outputImage', vtk(vtkResult));
+          })
+          .finally(() => {
+            this.loading = false;
+          });
+      } else {
+        this.$emit('outputImage', dataset);
+      }
     },
   },
 };

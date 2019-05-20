@@ -51,16 +51,19 @@ const adapters = [
 
   function unserializeVtkDataSet(obj) {
     const promises = [];
-    const result = forEachDataArray(obj, (ds, assign) => {
-      if (ds.values instanceof Blob) {
-        promises.push(
-          blobToTypedArray(ds.values, ds.dataType).then((arr) =>
-            assign(Object.assign(ds, { values: arr }))
-          )
-        );
-      }
-    });
-    return Promise.all(promises).then(() => result);
+    if (obj && typeof obj === 'object' && obj.vtkClass) {
+      const result = forEachDataArray(obj, (ds, assign) => {
+        if (ds.values instanceof Blob) {
+          promises.push(
+            blobToTypedArray(ds.values, ds.dataType).then((arr) =>
+              assign(Object.assign(ds, { values: arr }))
+            )
+          );
+        }
+      });
+      return Promise.all(promises).then(() => result);
+    }
+    return undefined;
   },
 ];
 

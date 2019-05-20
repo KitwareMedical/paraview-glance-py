@@ -15,17 +15,21 @@ class SegmentApi(Api):
         self.input_image = None
         self.next_tube_id = 0
 
-    @rpc('median_filter')
-    def median_filter(self, image, radius):
+    @rpc('preprocess')
+    def preprocess(self, image, filters):
+        filters = {f['filter']:f for f in filters}
         # TODO test if image type is already itk.F, 3
         itk_image = itk.CastImageFilter[type(image), itk.Image[itk.F, 3]].New()(image)
+        ImageType = type(itk_image)
 
-        median_filter = itk.MedianImageFilter[type(itk_image), type(itk_image)].New()
-        median_filter.SetInput(itk_image)
-        median_filter.SetRadius(radius)
-        median_filter.Update()
-
-        result = median_filter.GetOutput()
+        result = itk_image
+        if 'median' in filters:
+            args = filters['median']
+            median_filter = itk.MedianImageFilter[ImageType, ImageType].New()
+            median_filter.SetInput(itk_image)
+            median_filter.SetRadius(args['radius'])
+            median_filter.Update()
+            result = median_filter.GetOutput()
 
         # TODO no delete semantics
         self.persist(result)

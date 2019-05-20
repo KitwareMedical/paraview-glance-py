@@ -14,10 +14,10 @@
       </v-flex>
     </v-layout>
   </v-container>
-  <v-expansion-panel>
+  <v-expansion-panel expand>
     <v-expansion-panel-content>
       <template v-slot:header>
-        <span>Preprocess</span>
+        <span class="body-2">Preprocess</span>
       </template>
       <v-container :class="[$style.container, 'grid-list-lg']">
         <pre-process
@@ -28,7 +28,7 @@
     </v-expansion-panel-content>
     <v-expansion-panel-content>
       <template v-slot:header>
-        <span>Segmentation</span>
+        <span class="body-2">Segmentation</span>
       </template>
       <v-container :class="[$style.container, 'grid-list-lg']">
         <tube-tools
