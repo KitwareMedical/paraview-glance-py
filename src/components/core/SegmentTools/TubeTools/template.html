@@ -75,6 +75,12 @@
       v-for="tubeId in selectedTubes.order"
     >
       <v-list-tile :key="tubeId">
+        <v-list-tile-avatar>
+          <v-checkbox
+            :input-value="true"
+            @change="deselectTube(tubeId)"
+          />
+        </v-list-tile-avatar>
         <v-list-tile-content>
           Tube #{{ tubeId }}
         </v-list-tile-content>
