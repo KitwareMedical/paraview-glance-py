@@ -7,10 +7,10 @@
         :disabled="!inputData"
       />
     </v-flex>
-    <v-flex xs6>
+    <v-flex xs6 :class="$style.secondary">
       <v-checkbox
         :disabled="!inputData"
-        label="Use Preprocessed"
+        label="Preprocessed"
       />
     </v-flex>
     <v-flex xs6>
@@ -24,7 +24,7 @@
         hide-details
       />
     </v-flex>
-    <v-flex xs6>
+    <v-flex xs6 :class="$style.secondary">
       <v-checkbox label="Dynamic" hide-details />
     </v-flex>
     <template v-if="tubeScale.size === 'Custom'">
@@ -72,14 +72,16 @@
       </v-flex>
     </template>
   </v-layout>
-  <div>
-    <span class="body-2">Status: </span>
-    <span>{{ pendingSegs > 0 ? `${pendingSegs} segmenting...` : "Ready" }}</span>
-  </div>
-  <div>
-    <span class="body-2">Number of tubes: </span>
-    <span>{{ listTubes().length }}</span>
-  </div>
+  <v-layout row>
+    <v-flex xs6>
+      <span class="body-2">Status: </span>
+      <span>{{ pendingSegs > 0 ? `${pendingSegs} processing...` : "Ready" }}</span>
+    </v-flex>
+    <v-flex xs6>
+      <span class="body-2">Tube count: </span>
+      <span>{{ listTubes().length }}</span>
+    </v-flex>
+  </v-layout>
   <v-list>
     <v-subheader>Selected Tubes</v-subheader>
     <v-divider />
