@@ -48,6 +48,7 @@ class SegmentApi(Api):
 
         tube = self.segmenter.ExtractTube(position, self.next_tube_id, True)
         if tube is not None:
+            self.segmenter.AddTube(tube)
             self.next_tube_id += 1
             self.persist(tube)
             return tube
