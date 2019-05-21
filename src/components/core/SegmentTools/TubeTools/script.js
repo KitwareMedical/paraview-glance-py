@@ -43,20 +43,25 @@ export default {
   name: 'TubeTools',
   props: ['inputData'],
   data() {
+    const tubeSizes = [
+      { size: 'Small', args: { ridge: 1, radius: 1 } },
+      { size: 'Medium', args: { ridge: 2, radius: 2 } },
+      { size: 'Large', args: { ridge: 4, radius: 4 } },
+      { size: 'Custom', args: null },
+    ];
+
     return {
       enabled: false,
       scale: 2,
+      ridgeScale: 2,
+      radiusScale: 2,
+      tubeScale: tubeSizes[0],
+      tubeSizes,
       pendingSegs: 0,
       selectedTubes: {
         order: [],
         map: {},
       },
-      tubeSizes: [
-        { size: 'Small', args: { ridge: 1, radius: 1 } },
-        { size: 'Medium', args: { ridge: 2, radius: 2 } },
-        { size: 'Large', args: { ridge: 4, radius: 4 } },
-        { size: 'Huge', args: { ridge: 8, radius: 8 } },
-      ],
       readyPromise: Promise.resolve(),
     };
   },
@@ -80,6 +85,13 @@ export default {
           'set_segment_image',
           this.remote.persist(dataset)
         );
+      }
+    },
+    tubeScale(scale) {
+      if (scale.args) {
+        const { ridge, radius } = scale.args;
+        this.ridgeScale = ridge;
+        this.radiusScale = radius;
       }
     },
   },
