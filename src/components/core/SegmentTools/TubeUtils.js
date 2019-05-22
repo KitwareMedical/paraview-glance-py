@@ -44,7 +44,7 @@ export function centerlineToTube(centerline) {
     capping: true,
     radius: 1, // scaling factor
     varyRadius: VaryRadius.VARY_RADIUS_BY_ABSOLUTE_SCALAR,
-    numberOfSides: 50,
+    numberOfSides: 20,
   });
 
   filter.setInputArrayToProcess(0, 'Radius', 'PointData', 'Scalars');
