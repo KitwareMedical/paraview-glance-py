@@ -19,14 +19,24 @@ class SegmentApi(Api):
     def preprocess(self, image, filters):
         filters = {f['filter']:f for f in filters}
         # TODO test if image type is already itk.F, 3
-        itk_image = itk.CastImageFilter[type(image), itk.Image[itk.F, 3]].New()(image)
-        ImageType = type(itk_image)
+        image = itk.CastImageFilter[type(image), itk.Image[itk.F, 3]].New()(image)
+        ImageType = type(image)
 
-        result = itk_image
+        result = image
+        if 'windowLevel' in filters:
+            args = filters['windowLevel']
+            wl_filter = itk.IntensityWindowingImageFilter[ImageType, ImageType].New()
+            wl_filter.SetInput(image)
+            wl_filter.SetWindowLevel(args['width'], args['level'])
+            wl_filter.SetOutputMinimum(0)
+            wl_filter.SetOutputMinimum(1024)
+            wl_filter.Update()
+            result = wl_filter.GetOutput()
+
         if 'median' in filters:
             args = filters['median']
             median_filter = itk.MedianImageFilter[ImageType, ImageType].New()
-            median_filter.SetInput(itk_image)
+            median_filter.SetInput(image)
             median_filter.SetRadius(args['radius'])
             median_filter.Update()
             result = median_filter.GetOutput()
