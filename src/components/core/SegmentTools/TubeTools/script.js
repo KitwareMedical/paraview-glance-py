@@ -151,10 +151,15 @@ export default {
       }
     },
     deselectTube(tubeId) {
-      const idx = this.selectedTubes.map[tubeId];
+      let idx = this.selectedTubes.map[tubeId];
       if (idx !== undefined) {
         this.selectedTubes.order.splice(idx, 1);
         delete this.selectedTubes.map[tubeId];
+
+        // fix map from tubeId to order position
+        for (; idx < this.selectedTubes.order.length; idx++) {
+          this.selectedTubes.map[this.selectedTubes.order[idx]]--;
+        }
       }
     },
     isTubeSelected(tubeId) {
