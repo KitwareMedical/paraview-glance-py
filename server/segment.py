@@ -18,9 +18,10 @@ class SegmentApi(Api):
     @rpc('preprocess')
     def preprocess(self, image, filters):
         filters = {f['filter']:f for f in filters}
-        # TODO test if image type is already itk.F, 3
-        image = itk.CastImageFilter[type(image), itk.Image[itk.F, 3]].New()(image)
-        ImageType = type(image)
+
+        OldImageType = type(image)
+        ImageType = itk.Image[itk.F, 3]
+        image = itk.CastImageFilter[OldImageType, itk.Image[itk.F, 3]].New()(image)
 
         result = image
         if 'windowLevel' in filters:
@@ -40,6 +41,8 @@ class SegmentApi(Api):
             median_filter.SetRadius(args['radius'])
             median_filter.Update()
             result = median_filter.GetOutput()
+
+        result = itk.CastImageFilter[ImageType, OldImageType].New()(result)
 
         self.persist(result)
         return result

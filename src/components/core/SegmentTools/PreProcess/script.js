@@ -15,7 +15,7 @@ export default {
       },
       params: {
         windowLevel: {
-          window: 255,
+          width: 255,
           level: 127,
         },
         median: {
@@ -25,7 +25,7 @@ export default {
       loading: false,
     };
   },
-  computed: mapState(['remote']),
+  computed: mapState(['proxyManager', 'remote']),
   methods: {
     run() {
       const dataset = this.inputSource.getDataset();
@@ -33,7 +33,15 @@ export default {
       // persist dataset on server b/c it won't change
       this.remote.persist(dataset);
 
-      // TODO window-level params are from the 2d representations
+      // window-level params are from the 2d representations
+      const reps = this.proxyManager
+        .getRepresentations()
+        .filter((r) => r.getInput() === this.inputSource)
+        .filter((r) => r.isA('vtkSliceRepresentationProxy'));
+      if (reps.length) {
+        this.params.windowLevel.width = reps[0].getWindowWidth();
+        this.params.windowLevel.level = reps[0].getWindowLevel();
+      }
 
       const args = this.filters
         .filter((name) => this.enabled[name])
