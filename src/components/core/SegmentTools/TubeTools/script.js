@@ -6,6 +6,7 @@ import vtkCellPicker from 'vtk.js/Sources/Rendering/Core/CellPicker';
 
 import utils from 'paraview-glance/src/utils';
 import TubeUtils from 'paraview-glance/src/components/core/SegmentTools/TubeUtils';
+import ProxyManagerMixin from 'paraview-glance/src/mixins/ProxyManagerMixin';
 
 const { forAllViews } = utils;
 // global pickers
@@ -41,6 +42,7 @@ function onClick(interactor, button, cb) {
 
 export default {
   name: 'TubeTools',
+  mixins: [ProxyManagerMixin],
   props: ['inputData'],
   data() {
     const tubeSizes = [
@@ -84,7 +86,7 @@ export default {
       }
       return null;
     },
-    ...mapState(['proxyManager', 'remote']),
+    ...mapState(['remote']),
   },
   watch: {
     inputData(data) {
@@ -111,8 +113,7 @@ export default {
     },
   },
   mounted() {
-    // TODO unsub
-    forAllViews(this.proxyManager, (view) => {
+    this.forEachView((view) => {
       if (view.isA('vtkView2DProxy')) {
         const interactor = view.getRenderWindow().getInteractor();
         pointPicker.setPickFromList(1);

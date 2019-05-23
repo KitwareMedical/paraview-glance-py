@@ -4,6 +4,7 @@ import vtk from 'vtk.js/Sources/vtk';
 import macro from 'vtk.js/Sources/macro';
 
 import vtkTubeGroup from 'paraview-glance/src/models/TubeGroup';
+import ProxyManagerMixin from 'paraview-glance/src/mixins/ProxyManagerMixin';
 
 import PreProcess from './PreProcess';
 import TubeTools from './TubeTools';
@@ -11,6 +12,7 @@ import TubeUtils from './TubeUtils';
 
 export default {
   name: 'SegmentTools',
+  mixins: [ProxyManagerMixin],
   components: {
     PreProcess,
     TubeTools,
@@ -25,22 +27,17 @@ export default {
       segmentScale: 5,
     };
   },
-  computed: mapState(['proxyManager', 'remote']),
-  mounted() {
-    // TODO unsub
-    this.proxyManager.onProxyRegistrationChange((info) => {
-      if (info.proxyGroup === 'Sources') {
-        if (
-          info.action === 'unregister' &&
-          this.master &&
-          this.master.getProxyId() === info.proxyId
-        ) {
-          this.master = null;
-        }
-        // update image selection
-        this.$forceUpdate();
-      }
-    });
+  computed: mapState(['remote']),
+  onSourceDeletion(sourceId) {
+    if (this.master.getProxyId() === sourceId) {
+      this.master = null;
+    }
+  },
+  onProxyRegistrationChange({ proxyGroup }) {
+    if (proxyGroup === 'Sources') {
+      // update image selection
+      this.$forceUpdate();
+    }
   },
   methods: {
     getVolumes() {
