@@ -7,6 +7,7 @@ import vtkCellPicker from 'vtk.js/Sources/Rendering/Core/CellPicker';
 import utils from 'paraview-glance/src/utils';
 import TubeUtils from 'paraview-glance/src/components/core/SegmentTools/TubeUtils';
 import ProxyManagerMixin from 'paraview-glance/src/mixins/ProxyManagerMixin';
+import VtkMixin from 'paraview-glance/src/mixins/VtkMixin';
 
 const { forAllViews } = utils;
 // global pickers
@@ -42,7 +43,7 @@ function onClick(interactor, button, cb) {
 
 export default {
   name: 'TubeTools',
-  mixins: [ProxyManagerMixin],
+  mixins: [ProxyManagerMixin, VtkMixin],
   props: ['inputData'],
   data() {
     const tubeSizes = [
@@ -120,41 +121,29 @@ export default {
         interactor.setPicker(pointPicker);
 
         // left mouse click
-        // TODO unsub
-        onClick(interactor, 'left', (ev) => {
-          if (this.ready) {
-            this.pendingSegs++;
-            this.segmentAtClick(ev.position, view)
-              .finally(() => {
+        this.autoSub(
+          onClick(interactor, 'left', (ev) => {
+            if (this.ready) {
+              this.pendingSegs++;
+              this.segmentAtClick(ev.position, view).finally(() => {
                 this.pendingSegs--;
               });
-          }
-        });
-
-        // right mouse click
-        // TODO unsub
-        onClick(interactor, 'right', (ev) => {
-          const point = [ev.position.x, ev.position.y, 0];
-          pointPicker.pick(point, ev.pokedRenderer);
-
-          // TODO use selected source
-          const activeSource = this.proxyManager.getActiveSource();
-
-          console.log(ev.position);
-          // ev.pokedRenderer.getRenderWindow().getInteractor().getContainer()
-        });
+            }
+          })
+        );
       } else {
         // 3D view
         const interactor = view.getRenderWindow().getInteractor();
         cellPicker.setPickFromList(1);
         interactor.setPicker(cellPicker);
 
-        // TODO unsub
-        onClick(interactor, 'left', (ev) => {
-          if (this.inputData && this.inputData.tubeSource) {
-            this.tryPickTube(ev.position, view);
-          }
-        });
+        this.autoSub(
+          onClick(interactor, 'left', (ev) => {
+            if (this.inputData && this.inputData.tubeSource) {
+              this.tryPickTube(ev.position, view);
+            }
+          })
+        );
       }
     });
   },
@@ -198,7 +187,6 @@ export default {
       return [];
     },
     deleteTube(tubeId) {
-      // TODO delete tube server-side
       if (this.inputData) {
         this.remote.call('delete_tube', this.inputData.tubes.get(tubeId)).then(() => {
           this.inputData.tubes.delete(tubeId);
