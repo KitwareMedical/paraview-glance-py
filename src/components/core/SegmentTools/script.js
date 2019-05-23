@@ -54,7 +54,6 @@ export default {
     },
     setMasterVolume(source) {
       this.master = source;
-      // TODO resultMap isn't cleared if a source is deleted
       if (!this.pipelines.has(source)) {
         // so we can re-activate current source
         const activeSource = this.proxyManager.getActiveSource();
@@ -70,9 +69,10 @@ export default {
         tubeSource.setInputData(vtkTubeGroup.newInstance());
         this.proxyManager.createRepresentationInAllViews(tubeSource);
 
+        // TODO pipeline isn't cleared if a source is deleted
         this.pipelines.set(source, {
-          // when no post-processing, postProcessed is original source
-          postProcessed: source,
+          original: source,
+          preProcessed: null,
           tubeSource,
           tubes: new TubeUtils.TubeCollection(),
         });
@@ -81,10 +81,10 @@ export default {
         activeSource.activate();
       }
     },
-    setPostProcessed(image) {
+    setPreProcessed(image) {
       const pipeline = this.pipelines.get(this.master);
 
-      if (pipeline.postProcessed == this.master) {
+      if (pipeline.preProcessed === null) {
         // so we can re-activate current source
         const activeSource = this.proxyManager.getActiveSource();
 
@@ -95,16 +95,19 @@ export default {
             name: `Pre-processed ${this.master.getName()}`,
           }
         );
-        pipeline.postProcessed = source;
+        pipeline.preProcessed = source;
 
         // re-activate previous active source
         activeSource.activate();
       }
 
-      const { postProcessed } = pipeline;
+      const { preProcessed } = pipeline;
 
-      postProcessed.setInputData(image);
-      this.proxyManager.createRepresentationInAllViews(postProcessed);
+      preProcessed.setInputData(image);
+      this.proxyManager.createRepresentationInAllViews(preProcessed);
+
+      // allow child components to update with new preProcessed info
+      this.pipelines.set(this.master, Object.assign({}, pipeline));
     },
   },
 };

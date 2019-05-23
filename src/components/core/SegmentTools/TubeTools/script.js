@@ -63,11 +63,26 @@ export default {
         map: {},
       },
       readyPromise: Promise.resolve(),
+      internalUsePreprocessed: false,
     };
   },
   computed: {
     ready() {
       return this.inputData && this.enabled;
+    },
+    usePreprocessed() {
+      return !!(
+        this.inputData &&
+        this.inputData.preProcessed &&
+        this.internalUsePreprocessed
+      );
+    },
+    targetSource() {
+      if (this.inputData) {
+        const { preProcessed, original } = this.inputData;
+        return this.usePreprocessed ? preProcessed : original;
+      }
+      return null;
     },
     ...mapState(['proxyManager', 'remote']),
   },
@@ -79,12 +94,7 @@ export default {
     },
     enabled(state) {
       if (state) {
-        const source = this.inputData.postProcessed;
-        const dataset = source.getDataset();
-        this.readyPromise = this.remote.call(
-          'set_segment_image',
-          this.remote.persist(dataset)
-        );
+        this.setSegmentImage();
       }
     },
     tubeScale(scale) {
@@ -92,6 +102,11 @@ export default {
         const { ridge, radius } = scale.args;
         this.ridgeScale = ridge;
         this.radiusScale = radius;
+      }
+    },
+    usePreprocessed() {
+      if (this.enabled) {
+        this.setSegmentImage();
       }
     },
   },
@@ -143,6 +158,12 @@ export default {
     });
   },
   methods: {
+    setSegmentImage() {
+      this.readyPromise = this.remote.call(
+        'set_segment_image',
+        this.remote.persist(this.targetSource.getDataset())
+      );
+    },
     selectTube(tubeId) {
       if (this.selectedTubes.map[tubeId] === undefined) {
         const idx = this.selectedTubes.order.length;
@@ -211,7 +232,7 @@ export default {
     },
     segmentAtClick(position, view) {
       const point = [position.x, position.y, 0];
-      const source = this.inputData.postProcessed;
+      const source = this.targetSource;
 
       pointPicker.initializePickList();
       const rep = this.proxyManager.getRepresentation(source, view);
