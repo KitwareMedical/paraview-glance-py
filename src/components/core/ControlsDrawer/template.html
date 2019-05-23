@@ -2,23 +2,44 @@
   v-model="activeTab"
   centered
   grow
+  show-arrows
 >
-  <v-tab>Datasets</v-tab>
-  <v-tab>Tools</v-tab>
-  <v-tab>Preprocess</v-tab>
-  <v-tab>Global</v-tab>
+  <template v-for="tab in tabs">
+    <v-tab :key="tab.name">{{ tab.name }}</v-tab>
+  </template>
   <v-tabs-items touchless>
-    <v-tab-item>
-      <datasets />
-    </v-tab-item>
-    <v-tab-item>
-      <edit-tools />
-    </v-tab-item>
-    <v-tab-item>
-      <segment-tools />
-    </v-tab-item>
-    <v-tab-item>
-      <global-settings />
+    <v-tab-item
+      v-for="(tab, idx) in tabs"
+      :key="tab.name"
+    >
+      <v-layout
+        v-if="tab.tabFlow"
+        row
+      >
+        <v-flex xs6 text-xs-right>
+          <v-btn
+            flat
+            small
+            :disabled="(idx < 0) || !tabs[idx-1].paginate"
+            @click="activeTab--"
+          >
+            <v-icon>arrow_left</v-icon>
+            Prev
+          </v-btn>
+        </v-flex>
+        <v-flex xs6>
+          <v-btn
+            flat
+            small
+            :disabled="(idx >= tabs.length) || !tabs[idx+1].paginate"
+            @click="activeTab++"
+          >
+            Next
+            <v-icon>arrow_right</v-icon>
+          </v-btn>
+        </v-flex>
+      </v-layout>
+      <v-component :is="tab.component" />
     </v-tab-item>
   </v-tabs-items>
 </v-tabs>

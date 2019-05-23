@@ -16,6 +16,43 @@ export default {
   data() {
     return {
       activeTab: 0,
+      tabs: [
+        {
+          name: 'Datasets',
+          component: Datasets,
+          paginate: false,
+        },
+        {
+          name: 'Preprocess',
+          component: SegmentTools,
+          paginate: true,
+        },
+        {
+          name: 'Extract',
+          component: null,
+          paginate: true,
+        },
+        {
+          name: 'Tubes',
+          component: null,
+          paginate: true,
+        },
+        {
+          name: 'Statistics',
+          component: null,
+          paginate: true,
+        },
+        {
+          name: 'Register',
+          component: null,
+          paginate: true,
+        },
+        {
+          name: 'Global',
+          component: GlobalSettings,
+          paginate: false,
+        },
+      ],
     };
   },
 };
