@@ -46,11 +46,13 @@ export default {
       },
     }),
   },
-  onProxyRegistrationChange({ proxyGroup }) {
-    if (proxyGroup === 'Sources') {
-      // update image selection
-      this.$forceUpdate();
-    }
+  proxyManager: {
+    onProxyRegistrationChange({ proxyGroup, proxyId }) {
+      if (proxyGroup === 'Sources') {
+        // update image selection
+        this.$forceUpdate();
+      }
+    },
   },
   methods: {
     ...mapVesselActions({
