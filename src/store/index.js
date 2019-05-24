@@ -11,6 +11,7 @@ import global from 'paraview-glance/src/store/globalSettings';
 import files from 'paraview-glance/src/store/fileLoader';
 import screenshots from 'paraview-glance/src/store/screenshots';
 import views from 'paraview-glance/src/store/views';
+import vessels from 'paraview-glance/src/store/vessels';
 import { Actions, Mutations } from 'paraview-glance/src/store/types';
 import Remote from 'paraview-glance/src/remote';
 
@@ -69,6 +70,7 @@ function createStore(proxyManager) {
       files,
       screenshots,
       views,
+      vessels,
     },
     mutations: {
       SHOW_LANDING(state) {

@@ -1,4 +1,17 @@
 <v-container :class="[$style.container, 'grid-list-lg']">
+  <v-layout row wrap>
+    <v-flex xs12>
+      <v-select
+        label="Select input image"
+        no-data-text="No images available"
+        :items="getAvailableImages()"
+        item-text="name"
+        item-value="source"
+        :value="inputSource"
+        @input="setInputSource"
+      />
+    </v-flex>
+  </v-layout>
   <v-expansion-panel expand>
     <v-expansion-panel-content>
       <template v-slot:header>
@@ -64,7 +77,7 @@
   <v-layout row>
     <v-flex xs12 class="text-xs-center">
       <v-btn
-        @click="run"
+        @click="runFilters"
         :disabled="!inputSource"
         :loading="loading"
       >
