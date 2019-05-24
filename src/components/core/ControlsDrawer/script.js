@@ -22,7 +22,7 @@ export default {
         },
         {
           name: 'Preprocess',
-          component: Preprocess,
+          component: PreProcess,
           paginate: true,
         },
         {
