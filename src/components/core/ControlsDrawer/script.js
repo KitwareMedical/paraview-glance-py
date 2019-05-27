@@ -1,6 +1,7 @@
 import Datasets from 'paraview-glance/src/components/core/Datasets';
 import GlobalSettings from 'paraview-glance/src/components/core/GlobalSettings';
 import PreProcess from 'paraview-glance/src/components/vessels/PreProcess';
+import ExtractTool from 'paraview-glance/src/components/vessels/ExtractTool';
 
 // ----------------------------------------------------------------------------
 
@@ -10,6 +11,7 @@ export default {
     Datasets,
     GlobalSettings,
     PreProcess,
+    ExtractTool,
   },
   data() {
     return {
@@ -27,7 +29,7 @@ export default {
         },
         {
           name: 'Extract',
-          component: null,
+          component: ExtractTool,
           paginate: true,
         },
         {
