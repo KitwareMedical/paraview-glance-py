@@ -48,6 +48,39 @@ function reduceState(state) {
   };
 }
 
+function getModuleDefinitions() {
+  return {
+    global,
+    files,
+    screenshots,
+    views,
+    vessels,
+  };
+}
+
+export function registerProxyManagerHooks(pxm, store) {
+  const subs = [];
+  const modules = getModuleDefinitions();
+  const hookNames = ['onProxyRegistrationChange'];
+
+  Object.keys(modules)
+    .filter((mod) => Boolean(modules[mod].proxyManagerHooks))
+    .forEach((mod) => {
+      const hooks = modules[mod].proxyManagerHooks;
+      hookNames
+        .filter((name) => Boolean(hooks[name]))
+        .forEach((hookName) =>
+          subs.push(pxm[hookName](hooks[hookName](store)))
+        );
+    });
+
+  return () => {
+    while (subs.length) {
+      subs.pop().unsubscribe();
+    }
+  };
+}
+
 function createStore(proxyManager) {
   let pxm = proxyManager;
   if (!proxyManager) {
@@ -65,13 +98,9 @@ function createStore(proxyManager) {
       loadingState: false,
       panels: {},
     },
-    modules: {
-      global,
-      files,
-      screenshots,
-      views,
-      vessels,
-    },
+
+    modules: getModuleDefinitions(),
+
     mutations: {
       SHOW_LANDING(state) {
         state.route = 'landing';
@@ -95,6 +124,7 @@ function createStore(proxyManager) {
         state.remote = remote;
       },
     },
+
     actions: {
       CONNECT_REMOTE({ commit }, url) {
         const remote = Remote.connect(url);
