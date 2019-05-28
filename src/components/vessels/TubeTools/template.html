@@ -1,126 +1,60 @@
 <v-container :class="[$style.container, 'grid-list-lg']">
-  <v-layout row wrap align-center>
-    <v-flex xs6>
-      <v-switch
-        v-model="enabled"
-        label="Extract"
-        :disabled="!inputData"
-      />
-    </v-flex>
-    <v-flex xs6 :class="$style.secondary">
-      <v-checkbox
-        v-model="internalUsePreprocessed"
-        :disabled="!inputData || !inputData.preProcessed"
-        label="Preprocessed"
-      />
-    </v-flex>
-    <v-flex xs6>
-      <v-select
-        v-model="tubeScale"
-        label="Tube Scale"
-        :items="tubeSizes"
-        item-text="size"
-        item-value="size"
-        return-object
-        hide-details
-      />
-    </v-flex>
-    <v-flex xs6 :class="$style.secondary">
-      <v-checkbox label="Dynamic" hide-details />
-    </v-flex>
-    <template v-if="tubeScale.size === 'Custom'">
-      <v-flex xs9>
-        <v-slider
-          v-model="ridgeScale"
-          min="1"
-          max="10"
-          step="0.1"
-          label="Ridge"
-          always-dirty
-          hide-details
-        />
-      </v-flex>
-      <v-flex xs3>
-        <v-text-field
-          v-model="ridgeScale"
-          type="number"
-          min="1"
-          max="10"
-          step="0.1"
-          hide-details
-        />
-      </v-flex>
-      <v-flex xs9>
-        <v-slider
-          v-model="radiusScale"
-          min="1"
-          max="10"
-          step="0.1"
-          label="Radius"
-          always-dirty
-          hide-details
-        />
-      </v-flex>
-      <v-flex xs3>
-        <v-text-field
-          v-model="radiusScale"
-          type="number"
-          min="1"
-          max="10"
-          step="0.1"
-          hide-details
-        />
-      </v-flex>
-    </template>
-  </v-layout>
-  <v-layout row>
-    <v-flex xs6>
-      <span class="body-2">Status: </span>
-      <span>{{ pendingSegs > 0 ? `${pendingSegs} processing...` : "Ready" }}</span>
-    </v-flex>
-    <v-flex xs6>
-      <span class="body-2">Tube count: </span>
-      <span>{{ listTubes().length }}</span>
-    </v-flex>
-  </v-layout>
   <v-list>
-    <v-subheader>Selected Tubes</v-subheader>
+    <v-subheader>Tubes</v-subheader>
     <v-divider />
-    <template v-if="selectedTubes.length === 0">
+    <template v-if="tubes.length === 0">
       <v-list-tile>
         <v-list-tile-content
           class="grey--text"
           style="align-items: center"
         >
-          Click on tubes to select
+          No tubes yet!
         </v-list-tile-content>
       </v-list-tile>
       <v-divider />
     </template>
-    <template
-      v-else
-      v-for="tubeId in selectedTubes.order"
-    >
-      <v-list-tile :key="tubeId">
-        <v-list-tile-avatar>
-          <v-checkbox
-            :input-value="true"
-            @change="deselectTube(tubeId)"
-          />
-        </v-list-tile-avatar>
-        <v-list-tile-content>
-          Tube #{{ tubeId }}
-        </v-list-tile-content>
-        <v-list-tile-action>
-          <v-btn
-            icon
-            @click="deleteTube(tubeId)"
-          >
-            <v-icon color="grey">delete</v-icon>
-          </v-btn>
-        </v-list-tile-action>
-      </v-list-tile>
-      <v-divider />
+    <template v-else>
+      <template v-for="tubeId in selection">
+        <v-list-tile :key="tubeId">
+          <v-list-tile-avatar>
+            <v-checkbox
+              :input-value="true"
+              @change="deselectTube(tubeId)"
+            />
+          </v-list-tile-avatar>
+          <v-list-tile-content>
+            Tube #{{ tubeId }}
+          </v-list-tile-content>
+          <v-list-tile-action>
+            <v-btn
+              icon
+              @click="deleteTube(tubeId)"
+            >
+              <v-icon color="grey">delete</v-icon>
+            </v-btn>
+          </v-list-tile-action>
+        </v-list-tile>
+        <v-divider />
+      </template>
+      <template v-for="tube in tubes">
+        <v-list-tile :key="tube.id">
+          <v-list-tile-avatar>
+            <v-checkbox />
+          </v-list-tile-avatar>
+          <v-list-tile-content>
+            Tube #{{ tube.id }}
+          </v-list-tile-content>
+          <v-list-tile-action>
+            <v-btn
+              icon
+              @click="deleteTube(tube.id)"
+            >
+              <v-icon color="grey">delete</v-icon>
+            </v-btn>
+          </v-list-tile-action>
+        </v-list-tile>
+        <v-divider />
+      </template>
     </template>
   </v-list>
 </v-container>

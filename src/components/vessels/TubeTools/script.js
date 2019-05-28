@@ -1,191 +1,83 @@
 import { mapState } from 'vuex';
 import macro from 'vtk.js/Sources/macro';
-import vtkAppendPolyData from 'vtk.js/Sources/Filters/General/AppendPolyData';
-import vtkPointPicker from 'vtk.js/Sources/Rendering/Core/PointPicker';
 import vtkCellPicker from 'vtk.js/Sources/Rendering/Core/CellPicker';
 
-import utils from 'paraview-glance/src/utils';
-import TubeUtils from 'paraview-glance/src/components/core/SegmentTools/TubeUtils';
 import ProxyManagerMixin from 'paraview-glance/src/mixins/ProxyManagerMixin';
 import VtkMixin from 'paraview-glance/src/mixins/VtkMixin';
 
-const { forAllViews } = utils;
 // global pickers
-const pointPicker = vtkPointPicker.newInstance();
 const cellPicker = vtkCellPicker.newInstance();
 
 // ----------------------------------------------------------------------------
 
-function onClick(interactor, button, cb) {
-  const pressFn = `on${macro.capitalize(button)}ButtonPress`;
-  const releaseFn = `on${macro.capitalize(button)}ButtonRelease`;
-  let ox = 0;
-  let oy = 0;
-  const pressSub = interactor[pressFn]((ev) => {
-    ox = ev.position.x;
-    oy = ev.position.y;
-  });
-  const releaseSub = interactor[releaseFn]((ev) => {
-    const { x, y } = ev.position;
-    if ((x - ox) ** 2 + (y - oy) ** 2 < 9) {
-      cb(ev);
-    }
-  });
-  return {
-    unsubscribe: () => {
-      pressSub.unsubscribe();
-      releaseSub.unsubscribe();
-    },
-  };
-}
+// function onClick(interactor, button, cb) {
+//   const pressFn = `on${macro.capitalize(button)}ButtonPress`;
+//   const releaseFn = `on${macro.capitalize(button)}ButtonRelease`;
+//   let ox = 0;
+//   let oy = 0;
+//   const pressSub = interactor[pressFn]((ev) => {
+//     ox = ev.position.x;
+//     oy = ev.position.y;
+//   });
+//   const releaseSub = interactor[releaseFn]((ev) => {
+//     const { x, y } = ev.position;
+//     if ((x - ox) ** 2 + (y - oy) ** 2 < 9) {
+//       cb(ev);
+//     }
+//   });
+//   return {
+//     unsubscribe: () => {
+//       pressSub.unsubscribe();
+//       releaseSub.unsubscribe();
+//     },
+//   };
+// }
 
 // ----------------------------------------------------------------------------
 
 export default {
   name: 'TubeTools',
   mixins: [ProxyManagerMixin, VtkMixin],
-  props: ['inputData'],
   data() {
-    const tubeSizes = [
-      { size: 'Small', args: { ridge: 1, radius: 1 } },
-      { size: 'Medium', args: { ridge: 2, radius: 2 } },
-      { size: 'Large', args: { ridge: 4, radius: 4 } },
-      { size: 'Custom', args: null },
-    ];
-
     return {
-      enabled: false,
-      scale: 2,
-      ridgeScale: 2,
-      radiusScale: 2,
-      tubeScale: tubeSizes[0],
-      tubeSizes,
-      pendingSegs: 0,
-      selectedTubes: {
-        order: [],
-        map: {},
-      },
-      readyPromise: Promise.resolve(),
-      internalUsePreprocessed: false,
+      selection: [],
+      selectionLookup: {},
     };
   },
   computed: {
-    ready() {
-      return this.inputData && this.enabled;
-    },
-    usePreprocessed() {
-      return !!(
-        this.inputData &&
-        this.inputData.preProcessed &&
-        this.internalUsePreprocessed
-      );
-    },
-    targetSource() {
-      if (this.inputData) {
-        const { preProcessed, original } = this.inputData;
-        return this.usePreprocessed ? preProcessed : original;
-      }
-      return null;
-    },
-    ...mapState(['remote']),
-  },
-  watch: {
-    inputData(data) {
-      if (!data) {
-        this.enabled = false;
-      }
-    },
-    enabled(state) {
-      if (state) {
-        this.setSegmentImage();
-      }
-    },
-    tubeScale(scale) {
-      if (scale.args) {
-        const { ridge, radius } = scale.args;
-        this.ridgeScale = ridge;
-        this.radiusScale = radius;
-      }
-    },
-    usePreprocessed() {
-      if (this.enabled) {
-        this.setSegmentImage();
-      }
-    },
-  },
-  mounted() {
-    this.forEachView((view) => {
-      if (view.isA('vtkView2DProxy')) {
-        const interactor = view.getRenderWindow().getInteractor();
-        pointPicker.setPickFromList(1);
-        interactor.setPicker(pointPicker);
-
-        // left mouse click
-        this.autoSub(
-          onClick(interactor, 'left', (ev) => {
-            if (this.ready) {
-              this.pendingSegs++;
-              this.segmentAtClick(ev.position, view).finally(() => {
-                this.pendingSegs--;
-              });
-            }
-          })
-        );
-      } else {
-        // 3D view
-        const interactor = view.getRenderWindow().getInteractor();
-        cellPicker.setPickFromList(1);
-        interactor.setPicker(cellPicker);
-
-        this.autoSub(
-          onClick(interactor, 'left', (ev) => {
-            if (this.inputData && this.inputData.tubeSource) {
-              this.tryPickTube(ev.position, view);
-            }
-          })
-        );
-      }
-    });
+    ...mapState({
+      tubes: (state) => state.vessels.tubes,
+    }),
   },
   methods: {
-    setSegmentImage() {
-      this.readyPromise = this.remote.call(
-        'set_segment_image',
-        this.remote.persist(this.targetSource.getDataset())
-      );
-    },
     selectTube(tubeId) {
-      if (this.selectedTubes.map[tubeId] === undefined) {
-        const idx = this.selectedTubes.order.length;
-        this.selectedTubes.map[tubeId] = idx;
-        this.selectedTubes.order.push(tubeId);
+      if (this.selectionLookup[tubeId] === undefined) {
+        const idx = this.selection.length;
+        this.selectionLookup[tubeId] = idx;
+        this.selection.push(tubeId);
       }
     },
     deselectTube(tubeId) {
-      let idx = this.selectedTubes.map[tubeId];
+      let idx = this.selectionLookup[tubeId];
       if (idx !== undefined) {
-        this.selectedTubes.order.splice(idx, 1);
-        delete this.selectedTubes.map[tubeId];
+        this.selection.splice(idx, 1);
+        delete this.selectionLookup[tubeId];
 
         // fix map from tubeId to order position
-        for (; idx < this.selectedTubes.order.length; idx++) {
-          this.selectedTubes.map[this.selectedTubes.order[idx]]--;
+        for (; idx < this.selection.length; idx++) {
+          this.selectionLookup[this.selection[idx]]--;
         }
       }
     },
     isTubeSelected(tubeId) {
-      return this.selectedTubes.map[tubeId] !== undefined;
+      return this.selectionLookup[tubeId] !== undefined;
     },
     clearSelection() {
-      this.selectedTubes.map = {};
-      this.selectedTubes.order = [];
+      this.selection = [];
+      this.selectionLookup = {};
     },
-    listTubes() {
-      if (this.inputData) {
-        return this.inputData.tubes.getAll();
-      }
-      return [];
-    },
+
+
     deleteTube(tubeId) {
       if (this.inputData) {
         this.remote.call('delete_tube', this.inputData.tubes.get(tubeId)).then(() => {
@@ -218,28 +110,6 @@ export default {
 
       this.proxyManager.renderAllViews();
       this.$forceUpdate();
-    },
-    segmentAtClick(position, view) {
-      const point = [position.x, position.y, 0];
-      const source = this.targetSource;
-
-      pointPicker.initializePickList();
-      const rep = this.proxyManager.getRepresentation(source, view);
-      rep.getActors().forEach(pointPicker.addPickList);
-
-      pointPicker.pick(point, view.getRenderer());
-
-      return this.readyPromise.then(() => this.remote
-        .call('segment', pointPicker.getPointIJK(), this.scale)
-        .then((centerline) => {
-          if (centerline) {
-            const { tubes, tubeSource } = this.inputData;
-            tubes.put(centerline);
-          }
-
-          this.refreshTubeUI();
-        })
-      );
     },
     tryPickTube(position, view) {
       const { tubeSource, tubes } = this.inputData;

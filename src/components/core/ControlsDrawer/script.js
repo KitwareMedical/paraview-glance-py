@@ -2,6 +2,7 @@ import Datasets from 'paraview-glance/src/components/core/Datasets';
 import GlobalSettings from 'paraview-glance/src/components/core/GlobalSettings';
 import PreProcess from 'paraview-glance/src/components/vessels/PreProcess';
 import ExtractTool from 'paraview-glance/src/components/vessels/ExtractTool';
+import TubeTools from 'paraview-glance/src/components/vessels/TubeTools';
 
 // ----------------------------------------------------------------------------
 
@@ -12,6 +13,7 @@ export default {
     GlobalSettings,
     PreProcess,
     ExtractTool,
+    TubeTools,
   },
   data() {
     return {
@@ -34,7 +36,7 @@ export default {
         },
         {
           name: 'Tubes',
-          component: null,
+          component: TubeTools,
           paginate: true,
         },
         {
