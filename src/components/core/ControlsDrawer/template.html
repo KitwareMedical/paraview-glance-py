@@ -3,14 +3,16 @@
   centered
   grow
   show-arrows
+  :class="$style.tabsContainer"
 >
   <template v-for="tab in tabs">
     <v-tab :key="tab.name">{{ tab.name }}</v-tab>
   </template>
-  <v-tabs-items touchless>
+  <v-tabs-items touchless :class="$style.tabItems">
     <v-tab-item
       v-for="(tab, idx) in tabs"
       :key="tab.name"
+      :class="$style.tabItem"
     >
       <v-layout
         v-if="tab.paginate"
@@ -39,7 +41,10 @@
           </v-btn>
         </v-flex>
       </v-layout>
-      <v-component :is="tab.component" />
+      <v-component
+        :is="tab.component"
+        :class="$style.tabComponent"
+      />
     </v-tab-item>
   </v-tabs-items>
 </v-tabs>
