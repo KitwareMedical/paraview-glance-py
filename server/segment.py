@@ -14,6 +14,7 @@ class SegmentApi(Api):
         self.segmenter = None
         self.input_image = None
         self.next_tube_id = 0
+        self.tube_id_mapping = {}
 
     @rpc('preprocess')
     def preprocess(self, image, filters):
@@ -62,14 +63,16 @@ class SegmentApi(Api):
         tube = self.segmenter.ExtractTube(position, self.next_tube_id, True)
         if tube is not None:
             self.segmenter.AddTube(tube)
+            self.tube_id_mapping[tube.GetId()] = tube
             self.next_tube_id += 1
-            self.persist(tube)
             return tube
 
-    @rpc('delete_tube')
-    def delete_tube(self, tube):
+    @rpc('delete_tubes')
+    def delete_tubes(self, tube_ids):
         if self.segmenter is None:
             raise Exception('segment image is not set')
 
-        self.segmenter.DeleteTube(tube)
-        self.delete(tube)
+        for id_ in tube_ids:
+            tube = self.tube_id_mapping[id_]
+            self.segmenter.DeleteTube(tube)
+            del self.tube_id_mapping[id_]

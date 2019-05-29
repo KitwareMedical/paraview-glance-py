@@ -1,4 +1,4 @@
-import { mapState } from 'vuex';
+import { mapActions, mapState } from 'vuex';
 import macro from 'vtk.js/Sources/macro';
 import vtkCellPicker from 'vtk.js/Sources/Rendering/Core/CellPicker';
 
@@ -58,6 +58,9 @@ export default {
     },
   },
   methods: {
+    ...mapActions({
+      deleteTubes: 'vessels/deleteTubes',
+    }),
     toggleSelectAll() {
       if (this.selection.length) {
         this.clearSelection();
@@ -98,9 +101,10 @@ export default {
       this.selectionLookup = {};
     },
     deleteSelected() {
-      // TODO call "delete_tubes" rpc
+      if (this.selection.length) {
+        this.deleteTubes(this.selection).then(() => this.clearSelection());
+      }
     },
-
 
     deleteTube(tubeId) {
       if (this.inputData) {

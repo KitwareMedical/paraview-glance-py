@@ -218,6 +218,17 @@ const actions = {
   },
 
   /**
+   * Deletes a list of tubes.
+   */
+  deleteTubes: ({ commit, dispatch, rootState }, tubeIds) => {
+    const { remote } = rootState;
+    return remote.call('delete_tubes', tubeIds).then(() => {
+      commit('deleteTubes', tubeIds);
+      return dispatch('updateTubeSource');
+    });
+  },
+
+  /**
    * Resets local and remote segmentation state.
    */
   reset: () => {},
@@ -261,15 +272,21 @@ const mutations = {
       ...state.tubeCache,
     };
   },
-  removeTube: (state, tubeId) => {
-    let pos = state.tubesLookup[tubeId];
-    if (pos !== undefined) {
-      state.tubes.splice(pos, 1);
-      // fix tube lookup
-      for (; pos < state.tubes.length; pos++) {
-        state.tubesLookup[state.tubes[pos]]--;
+  deleteTubes: (state, tubeIds) => {
+    for (let i = 0; i < tubeIds.length; i++) {
+      const tubeId = tubeIds[i];
+      const pos = state.tubesLookup[tubeId];
+      if (pos !== undefined) {
+        state.tubes.splice(pos, 1);
       }
     }
+
+    // rebuild tube lookup
+    const lookup = {};
+    for (let i = 0; i < state.tubes.length; i++) {
+      lookup[state.tubes[i].id] = i;
+    }
+    state.tubesLookup = lookup;
   },
   setTubeColor: (state, tubeId, rgb) => {
     const pos = state.tubesLookup[tubeId];
