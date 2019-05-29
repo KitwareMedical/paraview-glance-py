@@ -1,50 +1,51 @@
 <v-container :class="[$style.container, 'grid-list-lg']">
-  <div :class="$style.spacer" />
+  <v-list-tile class="teal lighten-5">
+    <v-list-tile-avatar>
+      <v-checkbox
+        :input-value="selection.length > 0 && selection.length === tubes.length"
+        :value="selection.length > 0"
+        :indeterminate="selection.length > 0 && selection.length < tubes.length"
+        @change="toggleSelectAll"
+      />
+    </v-list-tile-avatar>
+    <v-list-tile-content>
+      <v-subheader class="pa-0">
+        <span>Tubes</span>
+      </v-subheader>
+    </v-list-tile-content>
+    <v-list-tile-action :class="$style.actionRow">
+      <v-tooltip bottom>
+        <template v-slot:activator="{ on }">
+          <v-btn
+            icon
+            small
+            v-on="on"
+            @click="showSelected = !showSelected"
+          >
+            <v-icon>{{ showSelected ? "grid_off" : "grid_on" }}</v-icon>
+          </v-btn>
+        </template>
+        <span>Show {{ showSelected ? "all" : "selected" }}</span>
+      </v-tooltip>
+      <v-tooltip bottom>
+        <template v-slot:activator="{ on }">
+          <v-btn
+            icon
+            small
+            v-on="on"
+            @click="deleteSelected"
+          >
+            <v-icon>delete</v-icon>
+          </v-btn>
+        </template>
+        <span>Delete selected</span>
+      </v-tooltip>
+    </v-list-tile-action>
+  </v-list-tile>
+
+  <v-divider class="grey" />
+
   <v-list :class="$style.tubeList">
-    <v-list-tile class="teal lighten-5">
-      <v-list-tile-avatar>
-        <v-checkbox
-          :input-value="selection.length > 0 && selection.length === tubes.length"
-          :value="selection.length > 0"
-          :indeterminate="selection.length > 0 && selection.length < tubes.length"
-          @change="toggleSelectAll"
-        />
-      </v-list-tile-avatar>
-      <v-list-tile-content>
-        <v-subheader class="pa-0">
-          <span>Tubes</span>
-        </v-subheader>
-      </v-list-tile-content>
-      <v-list-tile-action :class="$style.actionRow">
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on }">
-            <v-btn
-              icon
-              small
-              v-on="on"
-              @click="showSelected = !showSelected"
-            >
-              <v-icon>{{ showSelected ? "grid_off" : "grid_on" }}</v-icon>
-            </v-btn>
-          </template>
-          <span>Show {{ showSelected ? "all" : "selected" }}</span>
-        </v-tooltip>
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on }">
-            <v-btn
-              icon
-              small
-              v-on="on"
-              @click="deleteSelected"
-            >
-              <v-icon>delete</v-icon>
-            </v-btn>
-          </template>
-          <span>Delete selected</span>
-        </v-tooltip>
-      </v-list-tile-action>
-    </v-list-tile>
-    <v-divider class="grey" />
     <template v-if="tubes.length === 0">
       <v-list-tile>
         <v-list-tile-content
