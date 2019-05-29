@@ -114,39 +114,6 @@ export default {
       });
     },
 
-    deleteTube(tubeId) {
-      if (this.inputData) {
-        this.remote.call('delete_tube', this.inputData.tubes.get(tubeId)).then(() => {
-          this.inputData.tubes.delete(tubeId);
-          this.deselectTube(tubeId);
-          this.refreshTubeUI();
-        });
-      }
-    },
-    toggleTubeVisibility(tubeId) {
-      if (this.inputData) {
-        const { tubes } = this.inputData;
-        const color = tubes.get(tubeId).color.slice();
-        color[3] = 1 - color[3]; // alpha color is in [0, 1]
-        tubes.setColor(tubeId, color);
-        this.refreshTubeUI();
-      }
-    },
-    refreshTubeUI() {
-      const { tubes, tubeSource } = this.inputData;
-      tubeSource.setInputData(tubes.getTubeGroup());
-
-      const reps = this.proxyManager
-        .getRepresentations()
-        .filter((r) => r.getInput() === this.inputData.tubeSource);
-
-      for (let i = 0; i < reps.length; i++) {
-        reps[i].setColorBy('Colors', 'cellData');
-      }
-
-      this.proxyManager.renderAllViews();
-      this.$forceUpdate();
-    },
     tryPickTube(position, view) {
       const { tubeSource, tubes } = this.inputData;
       cellPicker.initializePickList();
