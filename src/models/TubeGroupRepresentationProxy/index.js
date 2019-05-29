@@ -20,7 +20,6 @@ function vtkTubeGroupRepresentationProxy(publicAPI, model) {
         : vtkMapper.ScalarMode.USE_CELL_FIELD_DATA;
     const scalarVisibility = true;
 
-    window.mapper = model.mapper;
     model.mapper.set(
       {
         colorByArrayName,

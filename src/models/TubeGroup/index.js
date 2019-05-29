@@ -6,15 +6,15 @@ import vtkPolyData from 'vtk.js/Sources/Common/DataModel/PolyData';
 // ----------------------------------------------------------------------------
 
 function vtkTubeGroup(publicAPI, model) {
-  // Set our className
-  model.classHierarchy.push('vtkTubeGroup');
-
-  // "copy" polydata to tube group
-  if (model.internalPolyData) {
-    Object.keys(model.internalPolyData).forEach((k) => {
-      publicAPI[k] = model.internalPolyData[k];
-    });
+  if (model.polyData && model.polyData.getClassName() === 'vtkPolyData') {
+    publicAPI.shallowCopy(model.polyData);
+    // do not keep a reference to it
+    model.polyData = null;
   }
+
+  // Set our className AFTER shallow copying the polydata
+  // This is a workaround to shallowCopy()
+  model.classHierarchy.push('vtkTubeGroup');
 }
 
 // ----------------------------------------------------------------------------
@@ -22,7 +22,7 @@ function vtkTubeGroup(publicAPI, model) {
 // ----------------------------------------------------------------------------
 
 const DEFAULT_VALUES = {
-  internalPolyData: null,
+  polyData: null,
 };
 
 // ----------------------------------------------------------------------------
