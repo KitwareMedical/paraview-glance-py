@@ -105,6 +105,14 @@ export default {
         this.deleteTubes(this.selection).then(() => this.clearSelection());
       }
     },
+    deleteSingleTube(tubeId) {
+      this.deleteTubes([tubeId]).then(() => {
+        if (this.selectionLookup[tubeId] !== undefined) {
+          // deselect tube
+          this.toggleSelection(tubeId);
+        }
+      });
+    },
 
     deleteTube(tubeId) {
       if (this.inputData) {
