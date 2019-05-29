@@ -237,7 +237,6 @@ const mutations = {
     state.tubePdSource = source;
   },
   // TODO what if tube.id exists? Should update.
-  // TODO generate tube polydata and insert into cache
   addTube: (state, tube) => {
     state.tubesLookup = {
       [tube.id]: state.tubes.length,
