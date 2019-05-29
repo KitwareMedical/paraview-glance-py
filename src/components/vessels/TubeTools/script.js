@@ -42,26 +42,47 @@ export default {
     return {
       selection: [],
       selectionLookup: {},
+      showSelected: false,
     };
   },
   computed: {
     ...mapState({
       tubes: (state) => state.vessels.tubes,
+      tubeIdMap: (state) => state.vessels.tubesLookup,
     }),
+    shownTubes() {
+      if (this.showSelected) {
+        return this.selection.map((id) => this.tubes[this.tubeIdMap[id]]);
+      }
+      return this.tubes;
+    },
   },
   methods: {
-    selectTube(tubeId) {
-      if (this.selectionLookup[tubeId] === undefined) {
-        const idx = this.selection.length;
-        this.selectionLookup[tubeId] = idx;
-        this.selection.push(tubeId);
+    toggleSelectAll() {
+      if (this.selection.length) {
+        this.clearSelection();
+      } else {
+        // select all
+        const lookup = {};
+        for (let i = 0; i < this.tubes.length; i++) {
+          lookup[this.tubes[i].id] = i;
+        }
+        this.selection = this.tubes.map((tube) => tube.id);
+        this.selectionLookup = lookup;
       }
     },
-    deselectTube(tubeId) {
+    toggleSelection(tubeId) {
       let idx = this.selectionLookup[tubeId];
-      if (idx !== undefined) {
+      if (this.selectionLookup[tubeId] === undefined) {
+        idx = this.selection.length;
+        this.selectionLookup = {
+          [tubeId]: idx,
+          ...this.selectionLookup,
+        };
+        this.selection.push(tubeId);
+      } else {
         this.selection.splice(idx, 1);
-        delete this.selectionLookup[tubeId];
+        this.$delete(this.selectionLookup, tubeId);
 
         // fix map from tubeId to order position
         for (; idx < this.selection.length; idx++) {
@@ -75,6 +96,9 @@ export default {
     clearSelection() {
       this.selection = [];
       this.selectionLookup = {};
+    },
+    deleteSelected() {
+      // TODO call "delete_tubes" rpc
     },
 
 

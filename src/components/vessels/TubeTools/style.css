@@ -1,8 +1,26 @@
 .container {
   height: 100%;
   padding: 0;
+  display: flex;
+  flex-flow: column;
 }
 
 .secondary label {
   font-size: 0.8em;
+}
+
+.tubeList {
+  flex: 2 1;
+  min-height: 50%;
+  overflow: auto;
+}
+
+.actionRow {
+  display: flex;
+  flex-flow: row;
+  align-items: center;
+}
+
+.actionButton {
+  padding-left: 4px;
 }
