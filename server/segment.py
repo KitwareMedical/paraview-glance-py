@@ -31,7 +31,7 @@ class SegmentApi(Api):
             wl_filter.SetInput(image)
             wl_filter.SetWindowLevel(args['width'], args['level'])
             wl_filter.SetOutputMinimum(0)
-            wl_filter.SetOutputMinimum(1024)
+            wl_filter.SetOutputMaximum(1024)
             wl_filter.Update()
             result = wl_filter.GetOutput()
 
