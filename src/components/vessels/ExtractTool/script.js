@@ -81,6 +81,11 @@ export default {
     },
   },
   watch: {
+    enabled(enabled) {
+      if (enabled) {
+        this.readyPromise = this.uploadExtractionImage();
+      }
+    },
     autoExtractSource(source) {
       this.setExtractionImage(source);
     },
@@ -125,6 +130,7 @@ export default {
     ...mapActions({
       extractTube: 'vessels/extractTube',
       setExtractionImage: 'vessels/setExtractionImage',
+      uploadExtractionImage: 'vessels/uploadExtractionImage',
     }),
     setExtractionImageById(sourceId) {
       this.setExtractionImage(this.proxyManager.getProxyById(sourceId));

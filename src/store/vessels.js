@@ -125,11 +125,17 @@ const actions = {
   /**
    * Sets extraction image.
    */
-  setExtractionImage: ({ commit, rootState }, source) => {
+  setExtractionImage: wrapMutationAsAction('setExtractionSource'),
+
+  /**
+   * Uploads extraction image.
+   */
+  uploadExtractionImage: ({ state, rootState }) => {
     const { remote } = rootState;
-    return remote
-      .call('set_segment_image', remote.persist(source.getDataset()))
-      .then(() => commit('setExtractionSource', source));
+    return remote.call(
+      'set_segment_image',
+      remote.persist(state.extractSource.getDataset())
+    );
   },
 
   /**
