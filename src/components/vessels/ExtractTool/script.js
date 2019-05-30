@@ -56,18 +56,6 @@ export default {
       tubeSizes,
       pendingSegs: 0,
       readyPromise: Promise.resolve(),
-
-      selectedTubes: {
-        order: [],
-        map: {},
-      },
-
-
-      pipelines: new WeakMap(),
-      menuX: 0,
-      menuY: 0,
-      contextMenu: false,
-      segmentScale: 5,
     };
   },
   computed: {
@@ -167,63 +155,5 @@ export default {
         })
       );
     },
-
-    // setMasterVolume(source) {
-    //   this.master = source;
-    //   if (!this.pipelines.has(source)) {
-    //     // so we can re-activate current source
-    //     const activeSource = this.proxyManager.getActiveSource();
-
-    //     const tubeSource = this.proxyManager.createProxy(
-    //       'Sources',
-    //       'TrivialProducer',
-    //       {
-    //         name: `Tubes for ${activeSource.getName()}`,
-    //       }
-    //     );
-
-    //     tubeSource.setInputData(vtkTubeGroup.newInstance());
-    //     this.proxyManager.createRepresentationInAllViews(tubeSource);
-
-    //     // TODO pipeline isn't cleared if a source is deleted
-    //     this.pipelines.set(source, {
-    //       original: source,
-    //       preProcessed: null,
-    //       tubeSource,
-    //       tubes: new TubeUtils.TubeCollection(),
-    //     });
-
-    //     // re-activate previous active source
-    //     activeSource.activate();
-    //   }
-    // },
-    // setPreProcessed(image) {
-    //   const pipeline = this.pipelines.get(this.master);
-
-    //   if (pipeline.preProcessed === null) {
-    //     // so we can re-activate current source
-    //     const activeSource = this.proxyManager.getActiveSource();
-
-    //     const source = this.proxyManager.createProxy(
-    //       'Sources',
-    //       'TrivialProducer',
-    //       {
-    //         name: `Pre-processed ${this.master.getName()}`,
-    //       }
-    //     );
-    //     pipeline.preProcessed = source;
-
-    //     // re-activate previous active source
-    //     activeSource.activate();
-    //   }
-
-    //   const { preProcessed } = pipeline;
-
-    //   preProcessed.setInputData(image);
-    //   this.proxyManager.createRepresentationInAllViews(preProcessed);
-
-    //   // allow child components to update with new preProcessed info
-    //   this.pipelines.set(this.master, Object.assign({}, pipeline));
-    // },
   },
 };
