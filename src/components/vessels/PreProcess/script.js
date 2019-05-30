@@ -39,7 +39,7 @@ export default {
         if (state.inputSource) {
           return {
             name: state.inputSource.getName(),
-            source: state.inputSource,
+            sourceId: state.inputSource.getProxyId(),
           };
         }
         return null;
@@ -59,17 +59,22 @@ export default {
       setInputSource: 'setInputSource',
       setPreProcessedImage: 'setPreProcessedImage',
     }),
+    setInputSourceById(proxyId) {
+      this.setInputSource(this.proxyManager.getProxyById(proxyId));
+    },
     getAvailableImages() {
       return this.proxyManager
         .getSources()
         .filter((s) => s.getType() === 'vtkImageData')
         .map((s) => ({
           name: s.getName(),
-          source: s,
+          sourceId: s.getProxyId(),
         }));
     },
+    // TODO make this an action
     runFilters() {
-      const dataset = this.inputSource.source.getDataset();
+      const source = this.proxyManager.getProxyById(this.inputSource.sourceId);
+      const dataset = source.getDataset();
 
       // persist dataset on server b/c it won't change
       this.remote.persist(dataset);
@@ -77,7 +82,7 @@ export default {
       // window-level params are from the 2d representations
       const reps = this.proxyManager
         .getRepresentations()
-        .filter((r) => r.getInput() === this.inputSource)
+        .filter((r) => r.getInput() === source)
         .filter((r) => r.isA('vtkSliceRepresentationProxy'));
       if (reps.length) {
         this.params.windowLevel.width = reps[0].getWindowWidth();
@@ -100,8 +105,6 @@ export default {
           .finally(() => {
             this.loading = false;
           });
-      // } else {
-      //   this.$emit('outputImage', dataset);
       }
     },
   },

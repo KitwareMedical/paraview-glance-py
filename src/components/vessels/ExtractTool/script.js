@@ -47,7 +47,6 @@ export default {
     ];
 
     return {
-      extractSource: null,
       enabled: false,
       scale: 2, // TO REMOVE
       ridgeScale: 2,
@@ -73,8 +72,11 @@ export default {
   },
   computed: {
     ...mapState({
+      proxyManager: 'proxyManager',
       remote: 'remote',
-      autoExtractSource: (state) => state.vessels.preProcessedSource,
+      extractSource: (state) => state.vessels.extractSource,
+      autoExtractSource: (state) =>
+        state.vessels.preProcessedSource || state.vessels.inputSource,
       numberOfTubes: (state) => state.vessels.tubes.length,
     }),
     ready() {
@@ -84,7 +86,7 @@ export default {
       if (this.extractSource) {
         return {
           name: this.extractSource.getName(),
-          source: this.extractSource,
+          sourceId: this.extractSource.getProxyId(),
         };
       }
       return null;
@@ -134,14 +136,10 @@ export default {
   methods: {
     ...mapActions({
       extractTube: 'vessels/extractTube',
+      setExtractionImage: 'vessels/setExtractionImage',
     }),
-    // TODO move this to vessels store action
-    setExtractionImage(source) {
-      this.extractSource = source;
-      this.readyPromise = this.remote.call(
-        'set_segment_image',
-        this.remote.persist(this.extractSource.getDataset())
-      );
+    setExtractionImageById(sourceId) {
+      this.setExtractionImage(this.proxyManager.getProxyById(sourceId));
     },
     getAvailableImages() {
       return this.proxyManager
@@ -149,7 +147,7 @@ export default {
         .filter((s) => s.getType() === 'vtkImageData')
         .map((s) => ({
           name: s.getName(),
-          source: s,
+          sourceId: s.getProxyId(),
         }));
     },
     segmentAtClick(position, view) {

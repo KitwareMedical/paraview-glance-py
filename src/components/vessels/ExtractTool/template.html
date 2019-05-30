@@ -6,9 +6,9 @@
         no-data-text="No images available"
         :items="getAvailableImages()"
         item-text="name"
-        item-value="source"
+        item-value="sourceId"
         :value="extractionImage"
-        @input="setExtractionImage"
+        @input="setExtractionImageById"
         hide-details
       />
     </v-flex>

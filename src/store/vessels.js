@@ -13,6 +13,7 @@ const createState = () => ({
   inputSource: null,
   preProcessedSource: null,
   tubePdSource: null,
+  extractSource: null,
   /* eslint-disable-next-line import/no-named-as-default-member */
   tubePolyData: vtkTubeGroup.newInstance(),
   tubeCache: {},
@@ -120,6 +121,16 @@ const actions = {
    * exist.
    */
   setPreProcessedSource: wrapMutationAsAction('setPreProcessedSource'),
+
+  /**
+   * Sets extraction image.
+   */
+  setExtractionImage: ({ commit, rootState }, source) => {
+    const { remote } = rootState;
+    return remote
+      .call('set_segment_image', remote.persist(source.getDataset()))
+      .then(() => commit('setExtractionSource', source));
+  },
 
   /**
    * Extracts a tube from the given coordinates with given scales.
@@ -240,6 +251,9 @@ const mutations = {
   },
   setPreProcessedSource: (state, source) => {
     state.preProcessedSource = source;
+  },
+  setExtractionSource: (state, source) => {
+    state.extractSource = source;
   },
   setTubePolyData: (state, group) => {
     state.tubePolyData = group;
