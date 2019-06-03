@@ -4,7 +4,6 @@ import vtkDataArray from 'vtk.js/Sources/Common/Core/DataArray';
 
 import vtkTubeGroup from 'paraview-glance/src/models/TubeGroup';
 import {
-  wrapMutationAsAction,
   convertStripsToPolys,
   centerlineToTube,
 } from 'paraview-glance/src/utils';
@@ -135,7 +134,21 @@ const actions = {
   /**
    * Sets extraction source.
    */
-  setExtractionSource: wrapMutationAsAction('setExtractionSource'),
+  setExtractionSource: ({ commit, rootState }, source) => {
+    const { proxyManager } = rootState;
+
+    source.activate();
+    proxyManager.getRepresentations().forEach((rep) => {
+      if (rep.getInput() === source) {
+        rep.setVisibility(true);
+      } else if (rep.getInput().getType() === 'vtkImageData') {
+        // don't show other images. we ignore non-images.
+        rep.setVisibility(false);
+      }
+    });
+
+    commit('setExtractionSource', source);
+  },
 
   /**
    * Uploads extraction image.
