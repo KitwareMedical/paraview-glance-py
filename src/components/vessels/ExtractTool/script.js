@@ -63,8 +63,6 @@ export default {
       proxyManager: 'proxyManager',
       remote: 'remote',
       extractSource: (state) => state.vessels.extractSource,
-      autoExtractSource: (state) =>
-        state.vessels.preProcessedSource || state.vessels.inputSource,
       numberOfTubes: (state) => state.vessels.tubes.length,
     }),
     ready() {
@@ -85,9 +83,6 @@ export default {
       if (enabled) {
         this.readyPromise = this.uploadExtractionImage();
       }
-    },
-    autoExtractSource(source) {
-      this.setExtractionImage(source);
     },
     tubeScale(scale) {
       if (scale.args) {
@@ -129,11 +124,11 @@ export default {
   methods: {
     ...mapActions({
       extractTube: 'vessels/extractTube',
-      setExtractionImage: 'vessels/setExtractionImage',
+      setExtractionSource: 'vessels/setExtractionSource',
       uploadExtractionImage: 'vessels/uploadExtractionImage',
     }),
     setExtractionImageById(sourceId) {
-      this.setExtractionImage(this.proxyManager.getProxyById(sourceId));
+      this.setExtractionSource(this.proxyManager.getProxyById(sourceId));
     },
     getAvailableImages() {
       return this.proxyManager

@@ -90,8 +90,13 @@ export function unserialize(serialized, pxm) {
 const actions = {
   /**
    * Sets the input source.
+   *
+   * This will automatically set the extraction source as well.
    */
-  setInputSource: wrapMutationAsAction('setInputSource'),
+  setInputSource: ({ dispatch, commit }, source) => {
+    commit('setInputSource', source);
+    return dispatch('setExtractionSource', source);
+  },
 
   /**
    * Sets the preprocessed image.
@@ -119,13 +124,18 @@ const actions = {
    * This differs from setPreProcessedImage in that the other action
    * accepts a vtk image, and will create a source if one doesn't already
    * exist.
+   *
+   * This will automatically set the extraction source as well.
    */
-  setPreProcessedSource: wrapMutationAsAction('setPreProcessedSource'),
+  setPreProcessedSource: ({ dispatch, commit }, source) => {
+    commit('setPreProcessedSource', source);
+    return dispatch('setExtractionSource', source);
+  },
 
   /**
-   * Sets extraction image.
+   * Sets extraction source.
    */
-  setExtractionImage: wrapMutationAsAction('setExtractionSource'),
+  setExtractionSource: wrapMutationAsAction('setExtractionSource'),
 
   /**
    * Uploads extraction image.
