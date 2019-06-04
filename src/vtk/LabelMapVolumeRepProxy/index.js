@@ -7,6 +7,7 @@ import vtkPiecewiseFunction from 'vtk.js/Sources/Common/DataModel/PiecewiseFunct
 
 import utils from 'paraview-glance/src/utils';
 
+/* eslint-disable-next-line import/no-named-as-default-member */
 const { makeSubManager } = utils;
 
 // ----------------------------------------------------------------------------

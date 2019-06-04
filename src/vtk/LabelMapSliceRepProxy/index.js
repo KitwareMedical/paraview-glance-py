@@ -8,6 +8,7 @@ import ImagePropertyConstants from 'vtk.js/Sources/Rendering/Core/ImageProperty/
 
 import utils from 'paraview-glance/src/utils';
 
+/* eslint-disable-next-line import/no-named-as-default-member */
 const { makeSubManager } = utils;
 const { InterpolationType } = ImagePropertyConstants;
 
