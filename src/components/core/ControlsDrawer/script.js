@@ -1,5 +1,6 @@
 import Datasets from 'paraview-glance/src/components/core/Datasets';
 import GlobalSettings from 'paraview-glance/src/components/core/GlobalSettings';
+import EditTools from 'paraview-glance/src/components/core/EditTools';
 import PreProcess from 'paraview-glance/src/components/vessels/PreProcess';
 import ExtractTool from 'paraview-glance/src/components/vessels/ExtractTool';
 import TubeTools from 'paraview-glance/src/components/vessels/TubeTools';
@@ -48,6 +49,11 @@ export default {
           name: 'Register',
           component: null,
           paginate: true,
+        },
+        {
+          name: 'Paint',
+          component: EditTools,
+          paginate: false,
         },
         {
           name: 'Global',
