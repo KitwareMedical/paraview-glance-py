@@ -76,3 +76,21 @@ class SegmentApi(Api):
             tube = self.tube_id_mapping[id_]
             self.segmenter.DeleteTube(tube)
             del self.tube_id_mapping[id_]
+    @rpc('root_tubes')
+    def tubetree(self, roots):
+        tubeGroup = self.segmenter.GetTubeGroup()
+
+        conv = itk.ConvertTubesToTubeTree[3].New()
+        conv.SetInput(tubeGroup)
+        # TODO add roots, if len(roots) > 0
+        conv.SetMaxTubeDistanceToRadiusRatio(2)
+        conv.SetMaxContinuityAngleError(180)
+        conv.Update()
+
+        children = conv.GetOutput().GetChildren(1) # recursive
+        new_parent_ids = []
+        for idx in range(len(children)):
+            child = itk.down_cast(children[idx])
+            new_parent_ids.append((child.GetId(), child.GetParentId()))
+
+        return new_parent_ids

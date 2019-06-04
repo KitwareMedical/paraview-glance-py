@@ -258,6 +258,23 @@ const actions = {
   },
 
   /**
+   * Computes roots from a given set of tubes.
+   *
+   * If no tubes are provided, all tubes are assumed to be valid roots.
+   */
+  computeRoots: ({ commit, rootState }, tubeIds) => {
+    const { remote } = rootState;
+    return remote.call('root_tubes', tubeIds).then((newParentIds) => {
+      const remap = {};
+      for (let i = 0; i < newParentIds.length; i++) {
+        const [tubeId, newParentId] = newParentIds[i];
+        remap[tubeId] = newParentId;
+      }
+      commit('reparentTubes', remap);
+    });
+  },
+
+  /**
    * Deletes a list of tubes.
    */
   deleteTubes: ({ commit, dispatch, rootState }, tubeIds) => {
@@ -290,7 +307,7 @@ const mutations = {
   setTubeSource: (state, source) => {
     state.tubePdSource = source;
   },
-  // TODO what if tube.id exists? Should update.
+  // TODO what if tube.id exists? Should update. This should handle cases like tube smoothing
   addTube: (state, tube) => {
     state.tubesLookup = {
       [tube.id]: state.tubes.length,
@@ -337,11 +354,21 @@ const mutations = {
       state.tubes[pos].color = rgb.slice();
     }
   },
-  setTubeParent: (state, tubeId, parentId) => {
-    const childPos = state.tubesLookup[tubeId];
-    const parentPos = state.tubesLookup[parentId];
-    if (childPos !== undefined && parentPos !== undefined) {
-      state.tubes[childPos].parentId = parentId;
+  reparentTubes: (state, remap) => {
+    const tubesToChange = Object.keys(remap);
+    for (let i = 0; i < tubesToChange.length; i++) {
+      const childId = tubesToChange[i];
+      const parentId = remap[childId];
+
+      const childPos = state.tubesLookup[childId];
+      const parentPos = state.tubesLookup[parentId];
+      if (
+        childPos !== undefined &&
+        // allow unparenting a child tube
+        (parentId === -1 || parentPos !== undefined)
+      ) {
+        state.tubes[childPos].parentId = parentId;
+      }
     }
   },
 };

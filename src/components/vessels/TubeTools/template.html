@@ -1,4 +1,17 @@
 <v-container :class="[$style.container, 'grid-list-lg']">
+  <v-subheader>
+    General tube operations
+  </v-subheader>
+
+  <v-btn>Generate tree from roots</v-btn>
+
+  <v-subheader>
+    Selected tube operations
+  </v-subheader>
+
+  <v-btn>Smooth</v-btn>
+  <v-btn @click="computeRoots">Make Root</v-btn>
+
   <v-list-tile class="teal lighten-5">
     <v-list-tile-avatar>
       <v-checkbox
@@ -69,9 +82,14 @@
           />
         </v-list-tile-avatar>
         <v-list-tile-content>
-          Tube #{{ tube.id }}
+          #{{ tube.id }} {{ tube.parentId === -1 ? null : "^" + tube.parentId }}
         </v-list-tile-content>
-        <v-list-tile-action>
+        <v-list-tile-action :class="$style.actionRow">
+          <v-btn
+            icon
+          >
+            <v-icon color="grey">invert_colors</v-icon>
+          </v-btn>
           <v-btn
             icon
             @click="deleteSingleTube(tube.id)"

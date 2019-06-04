@@ -60,6 +60,7 @@ export default {
   methods: {
     ...mapActions({
       deleteTubes: 'vessels/deleteTubes',
+      computeRoots: 'vessels/computeRoots',
     }),
     toggleSelectAll() {
       if (this.selection.length) {
