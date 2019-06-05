@@ -27,7 +27,7 @@ function onMounted() {
 
             newPanelStates.push(state);
           } else {
-            newPanelStates.push(true);
+            newPanelStates.push(false);
           }
           newPanelStateIndexMap.set(ds, index);
 
