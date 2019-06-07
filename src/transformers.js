@@ -1,5 +1,9 @@
+/* eslint-disable import/no-named-as-default-member */
+
 import vtkImageData from 'vtk.js/Sources/Common/DataModel/ImageData';
 import vtkDataArray from 'vtk.js/Sources/Common/Core/DataArray';
+
+import vtkLabelMap from 'paraview-glance/src/vtk/LabelMap';
 
 import {
   registerReplacer,
@@ -85,3 +89,16 @@ function toVtkImage(key, value) {
   return undefined;
 }
 registerReviver(toVtkImage);
+
+function toVtkLabelMap(key, value) {
+  if (value && value.vtkClass === 'vtkLabelMap') {
+    return toVtkImage(key, value.imageRepresentation).then((vtkImage) =>
+      vtkLabelMap.newInstance({
+        imageRepresentation: vtkImage,
+        colorMap: value.colorMap,
+      })
+    );
+  }
+  return undefined;
+}
+registerReviver(toVtkLabelMap);
