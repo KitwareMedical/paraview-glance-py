@@ -333,13 +333,8 @@ const mutations = {
     };
   },
   deleteTubes: (state, tubeIds) => {
-    for (let i = 0; i < tubeIds.length; i++) {
-      const tubeId = tubeIds[i];
-      const pos = state.tubesLookup[tubeId];
-      if (pos !== undefined) {
-        state.tubes.splice(pos, 1);
-      }
-    }
+    const set = new Set(tubeIds);
+    state.tubes = state.tubes.filter((tube) => !set.has(tube.id));
 
     // rebuild tube lookup
     const lookup = {};
