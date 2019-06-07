@@ -22,7 +22,7 @@
           <v-btn
             flat
             small
-            :disabled="(idx < 0) || !tabs[idx-1].paginate"
+            :disabled="(idx === 0) || !tabs[idx-1].paginate"
             @click="activeTab--"
           >
             <v-icon>arrow_left</v-icon>
@@ -33,7 +33,7 @@
           <v-btn
             flat
             small
-            :disabled="(idx >= tabs.length) || !tabs[idx+1].paginate"
+            :disabled="(idx === tabs.length - 1) || !tabs[idx+1].paginate"
             @click="activeTab++"
           >
             Next
