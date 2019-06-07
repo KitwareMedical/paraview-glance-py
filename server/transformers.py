@@ -5,52 +5,16 @@ import random
 import numpy as np
 import itk
 
-
-adapters = []
-
-def noSuchMethod(name):
-    def wrapper(*_, **__):
-        raise Exception('No method {}'.format(name))
-    return wrapper
-
-def adapter(test, attachments=False):
-    def wrapper(fn):
-        if attachments:
-            adapters.append((test, fn))
-        else:
-            adapters.append((test, lambda o, _: fn(o)))
-        return fn
-    return wrapper
-
-def transform(obj, addAttachment=noSuchMethod('addAttachment')):
-    '''Transforms/serializes objects into serializable format
-
-    obj: Object to serialize
-    addAttachment: Helper function to attach binary data to response.
-                   This should only be useful for conversions from non-serializable
-                   to serializable formats that will be sent to the client.
-
-                   If no method is given, then it is assumed that the only
-                   transformations that will occur are ones that do not use
-                   addAttachment.
-    '''
-    for test, fn in adapters:
-        okay = False
-        try:
-            okay = test(obj)
-        except:
-            pass
-
-        if okay:
-            return fn(obj, addAttachment)
-    # no transform
-    return obj
+from serializable import serializer, unserializer
 
 def print_matrix(itkmat, size=(3, 3)):
     for i in range(size[0]):
         for j in range(size[1]):
             sys.stdout.write('{} '.format(itkmat(i, j)))
         sys.stdout.write('\n')
+
+def is_itk_image(o):
+    return type(o).__name__.startswith('itkImage')
 
 # modified from: https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/itkwidgets/trait_types.py#L49
 def _itk_image_to_type(itkimage):
@@ -163,80 +127,82 @@ def unpack_data_arrays(vtk_obj):
                 vtk_obj[k] = unpack_data_arrays(vtk_obj[k])
     return vtk_obj
 
-@adapter(lambda o: o['vtkClass'] == 'vtkImageData')
-def vtk_to_itk_image(vtk_image):
+@unserializer(lambda k, v: v['vtkClass'] == 'vtkImageData')
+def vtk_to_itk_image(key, vtk_image):
     vtk_image = unpack_data_arrays(vtk_image)
-    imgArr = vtk_image['pointData']['arrays'][0]['data']['values']
+    pixel_data = vtk_image['pointData']['values']
+    pixel_type = vtk_image['pointData']['dataType']
+
+    pixel_data = _vtkjs_type_convert(pixel_data, pixel_type)
+
     # numpy indexes in ZYX order, where X varies the fastest
     dims = [
         vtk_image['extent'][5] - vtk_image['extent'][4] + 1,
         vtk_image['extent'][3] - vtk_image['extent'][2] + 1,
         vtk_image['extent'][1] - vtk_image['extent'][0] + 1,
     ]
+
     direction = np.zeros((3,3))
-    # direction is a json object instead of an array b/c
-    # it's originally stored as a Float32Array
     for x in range(3):
         for y in range(3):
-            direction[x][y] = vtk_image['direction'][str(x*3+y)]
+            direction[x][y] = vtk_image['direction'][x*3+y]
 
-    itkImage = itk.GetImageFromArray(np.reshape(imgArr, dims))
+    itkImage = itk.GetImageFromArray(np.reshape(pixel_data, dims))
     # https://discourse.itk.org/t/set-image-direction-from-numpy-array/844/10
     vnlmat = itk.GetVnlMatrixFromArray(direction)
     itkImage.GetDirection().GetVnlMatrix().copy_in(vnlmat.data_block())
     itkImage.SetOrigin(vtk_image['origin'])
     itkImage.SetSpacing(vtk_image['spacing'])
+
     return itkImage
 
-@adapter(lambda o: type(o).__name__.startswith('itkImage'), attachments=True)
-def itk_to_vtk_image(itk_image, addAttachment):
-    dims = list(itk_image.GetLargestPossibleRegion().GetSize())
-    extent = []
-    for v in dims:
-        extent.append(0)
-        extent.append(v - 1)
-
-    # TODO attach "values" as attachment
-    values = itk.GetArrayFromImage(itk_image).flatten(order='C')
-
-    return {
-        'vtkClass': 'vtkImageData',
-        'dataDescription': 8, # StructuredData.XYZ_GRID from vtk.js
-        'spacing': list(itk_image.GetSpacing()),
-        'origin': list(itk_image.GetOrigin()),
-        'direction': list(itk.GetArrayFromVnlMatrix(itk_image.GetDirection().GetVnlMatrix().as_matrix()).flatten()),
-        'extent': extent,
-        'pointData': {
-            'vtkClass': 'vtkDataSetAttributes',
-            'activeScalars': 0,
-            'arrays': [{
-                'data': {
-                    'vtkClass': 'vtkDataArray',
-                    'dataType': _itk_image_to_type(itk_image),
-                    'name': 'Scalars',
-                    'numberOfComponents': itk_image.GetNumberOfComponentsPerPixel(),
-                    # numpy datatypes are not serializable
-                    'rangeTuple': [float(np.min(values)), float(np.max(values))],
-                    'size': len(values),
-                    'values': addAttachment(values.tobytes()),
-                },
-            }],
-        },
-    }
-
-@adapter(lambda o: type(o).__name__ == 'itkTubeSpatialObject3')
-def serialize_tube(tube):
-    tube_points = []
-    for i in range(tube.GetNumberOfPoints()):
-        point = tube.GetPoint(i)
-        tube_points.append({
-            'point': list(point.GetPositionInObjectSpace()),
-            'radius': point.GetRadiusInObjectSpace(),
-        })
-
-    return {
-        'id': tube.GetId(),
-        'points': tube_points,
-        'color': list(tube.GetProperty().GetColor()),
-        'parent': tube.GetParentId(),
-    }
+#@adapter(is_itk_image, attachments=True)
+#def itk_to_vtk_image(itk_image, addAttachment):
+#    dims = list(itk_image.GetLargestPossibleRegion().GetSize())
+#    extent = []
+#    for v in dims:
+#        extent.append(0)
+#        extent.append(v - 1)
+#
+#    values = itk.GetArrayFromImage(itk_image).flatten(order='C')
+#
+#    return {
+#        'vtkClass': 'vtkImageData',
+#        'spacing': list(itk_image.GetSpacing()),
+#        'origin': list(itk_image.GetOrigin()),
+#        'extent': extent,
+#        'direction': list(itk.GetArrayFromVnlMatrix(itk_image.GetDirection().GetVnlMatrix().as_matrix()).flatten()),
+#        'pixelData': {
+#            'values': addAttachment(values.tobytes()),
+#            'dataType': _itk_image_to_type(itk_image),
+#            'numberOfComponents': itk_image.GetNumberOfComponentsPerPixel(),
+#        },
+#    }
+#
+#@adapter(lambda o: o['vtkClass'] == 'vtkLabelMap' and is_itk_image(o['imageRepresentation']),
+#        attachments=True)
+#def serialize_labelmap(labelmap, addAttachment):
+#    labelmap['imageRepresentation'] = itk_to_vtk_image(labelmap['imageRepresentation'], addAttachment)
+#    return labelmap
+#
+#@adapter(lambda o: o['vtkClass'] == 'vtkLabelMap' and type(o['imageRepresentation']) is dict)
+#def unserialize_labelmap(labelmap):
+#    labelmap['imageRepresentation'] = vtk_to_itk_image(labelmap['imageRepresentation'])
+#    return labelmap
+#
+#@adapter(lambda o: type(o).__name__ == 'itkTubeSpatialObject3')
+#def serialize_tube(tube):
+#    tube_points = []
+#    for i in range(tube.GetNumberOfPoints()):
+#        point = tube.GetPoint(i)
+#        tube_points.append({
+#            'point': list(point.GetPositionInObjectSpace()),
+#            'radius': point.GetRadiusInObjectSpace(),
+#        })
+#
+#    return {
+#        'id': tube.GetId(),
+#        'points': tube_points,
+#        'color': list(tube.GetProperty().GetColor()),
+#        'parent': tube.GetParentId(),
+#    }

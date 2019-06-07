@@ -4,7 +4,8 @@ import uuid
 import wslink
 from wslink.websocket import LinkProtocol
 
-from adapters import transform
+from serializable import serialize, unserialize
+import transformers # register our serializers/unserializers
 
 def rpc(name):
     def wrapper(fn):
@@ -14,9 +15,14 @@ def rpc(name):
             retval = fn(self, *args, **kwargs)
             uid = self.get_persistent_uid(retval)
 
+
+            def attachment_replacer(key, value):
+                print('addAttachment')
+                return value
+
             return {
                 'uid': uid,
-                'data': transform(retval, self.addAttachment),
+                'data': serialize(retval, attachment_replacer)
             }
 
         return wslink.register(name)(handler)
@@ -38,7 +44,7 @@ class Api(LinkProtocol):
                 uid = arg['uid']
                 data = arg['data']
                 if uid is None:
-                    new_args.append(transform(data))
+                    new_args.append(unserialize(data))
                 else:
                     new_args.append(self._cache.get(uid, None))
             else:
@@ -50,7 +56,7 @@ class Api(LinkProtocol):
                 uid = kwarg['uid']
                 data = kwarg['data']
                 if uid is None:
-                    new_kwargs[key] = transform(data)
+                    new_kwargs[key] = unserialize(data)
                 else:
                     new_kwargs[key] = self._cache.get(uid, None)
             else:
