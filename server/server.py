@@ -8,7 +8,7 @@ from wslink import server
 from twisted.internet import reactor
 
 #from protocol import Protocol
-from segment import SegmentApi
+from algorithm import AlgorithmApi
 
 def get_port():
     '''Don't care about race condition here for getting a free port.'''
@@ -27,7 +27,7 @@ class AlgorithmServer(ServerProtocol):
         AlgorithmServer.authKey = options.authKey
 
     def initialize(self):
-        self.registerLinkProtocol(SegmentApi())
+        self.registerLinkProtocol(AlgorithmApi())
         self.updateSecret(AlgorithmServer.authKey)
 
 if __name__ == '__main__':
