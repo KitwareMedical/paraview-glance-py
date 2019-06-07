@@ -1,6 +1,8 @@
 import WebsocketConnection from 'paraview-glance/wslink/js/src/WebsocketConnection';
 
-import serialize from 'paraview-glance/src/serialize';
+import * as serializable from 'paraview-glance/src/serializable';
+// register transformers
+import 'paraview-glance/src/transformers';
 
 function defer() {
   let resolve;
@@ -47,7 +49,8 @@ function connect(endpoint) {
     ws.connect();
   });
 
-  function handleResult(result) {
+  // handles return results
+  const handleResult = function handleResult(result) {
     if (result) {
       const { uid, data, deferredId } = result;
       let deferred = null;
@@ -67,21 +70,50 @@ function connect(endpoint) {
         }
       }
 
-      return serialize.transform(data).then((transformedData) => {
+      return serializable.revert(data).then((obj) => {
         if (uid) {
-          objDir.set(transformedData, uid);
+          objDir.set(obj, uid);
         }
 
         if (deferred) {
-          deferred.resolve(transformedData);
+          deferred.resolve(obj);
           return deferred.promise;
         }
 
-        return transformedData;
+        return obj;
       });
     }
     return Promise.reject(new Error('No result from server'));
-  }
+  };
+
+  const call = function call(rpcEndpoint, skipObjDir, ...args) {
+    return pSession.then((session) => {
+      const preparedArgs = args.map((arg) => {
+        if (!skipObjDir && objDir.has(arg)) {
+          return Promise.resolve(objDir.get(arg)).then((uid) => ({
+            uid,
+            data: null,
+          }));
+        }
+
+        const attachTypedArrays = (key, value) => {
+          if (!Array.isArray(value) && ArrayBuffer.isView(value)) {
+            return session.addAttachment(value.buffer);
+          }
+          return value;
+        };
+
+        return serializable.prepare(arg, attachTypedArrays).then((data) => ({
+          uid: null,
+          data,
+        }));
+      });
+
+      return Promise.all(preparedArgs)
+        .then((newArgs) => session.call(rpcEndpoint, newArgs))
+        .then(handleResult);
+    });
+  };
 
   // connection lifecycle callbacks
   pSession
@@ -91,64 +123,32 @@ function connect(endpoint) {
   // handle deferred results
   pSession.then((session) => session.subscribe('defer.results', handleResult));
 
-  const api = {
+  return {
     onready: (cb) => setCallback(cbs.ready, cb),
     onerror: (cb) => setCallback(cbs.error, cb),
-    call: (rpcEndpoint, ...args) =>
-      pSession.then((session) => {
-        const promisedArgs = args.map((arg) => {
-          if (arg instanceof Promise) {
-            return arg.then((uid) => ({
-              uid,
-              data: null,
-            }));
-          }
-
-          if (objDir.has(arg)) {
-            return Promise.resolve({
-              uid: objDir.get(arg),
-              data: null,
-            });
-          }
-
-          return serialize
-            .transform(arg, session.addAttachment)
-            .then((data) => ({
-              uid: null,
-              data,
-            }));
-        });
-
-        return Promise.all(promisedArgs)
-          .then((newArgs) => session.call(rpcEndpoint, newArgs))
-          .then(handleResult);
-      }),
-    // markDirty(targetObject) {
-    //   if (targetObject && objDir.has(targetObject)) {
-    //     const state = objDir.get(targetObject);
-    //     objDir.set(targetObject, Object.assign(state, { dirty: true }));
-    //   }
-    // },
+    call: (rpcEndpoint, ...args) => call(rpcEndpoint, false, ...args),
     persist: (obj) => {
       if (objDir.has(obj)) {
         return Promise.resolve(objDir.get(obj));
       }
-      return api.call('persist_object', obj).then((uid) => {
+      const promise = call('persist_object', true, obj).then((uid) => {
         objDir.set(obj, uid);
         return uid;
       });
+
+      // set objDir's contents with a promsie
+      objDir.set(obj, promise);
+      return promise;
     },
     delete: (obj) => {
       if (objDir.has(obj)) {
-        return api.call('delete_object', obj).then(() => {
+        return call('delete_object', false, obj).then(() => {
           objDir.delete(obj);
         });
       }
       return Promise.resolve();
     },
   };
-
-  return api;
 }
 
 export default {

@@ -127,9 +127,57 @@ def unpack_data_arrays(vtk_obj):
                 vtk_obj[k] = unpack_data_arrays(vtk_obj[k])
     return vtk_obj
 
+###############
+# Serializers #
+###############
+
+@serializer(lambda k, v: is_itk_image(v))
+def itk_to_vtk_image(key, itk_image):
+    dims = list(itk_image.GetLargestPossibleRegion().GetSize())
+    extent = []
+    for v in dims:
+        extent.append(0)
+        extent.append(v - 1)
+
+    values = itk.GetArrayFromImage(itk_image).flatten(order='C')
+
+    return {
+        'vtkClass': 'vtkImageData',
+        'spacing': list(itk_image.GetSpacing()),
+        'origin': list(itk_image.GetOrigin()),
+        'extent': extent,
+        'direction': list(
+            itk.GetArrayFromVnlMatrix(itk_image.GetDirection().GetVnlMatrix().as_matrix()).flatten()),
+        'pointData': {
+            'values': values,
+            'dataType': _itk_image_to_type(itk_image),
+            'numberOfComponents': itk_image.GetNumberOfComponentsPerPixel(),
+        },
+    }
+
+@serializer(lambda k, v: type(v).__name__ == 'itkTubeSpatialObject3')
+def serialize_tube(key, tube):
+    tube_points = []
+    for i in range(tube.GetNumberOfPoints()):
+        point = tube.GetPoint(i)
+        tube_points.append({
+            'point': list(point.GetPositionInObjectSpace()),
+            'radius': point.GetRadiusInObjectSpace(),
+        })
+
+    return {
+        'id': tube.GetId(),
+        'points': tube_points,
+        'color': list(tube.GetProperty().GetColor()),
+        'parent': tube.GetParentId(),
+    }
+
+#################
+# Unserializers #
+#################
+
 @unserializer(lambda k, v: v['vtkClass'] == 'vtkImageData')
 def vtk_to_itk_image(key, vtk_image):
-    vtk_image = unpack_data_arrays(vtk_image)
     pixel_data = vtk_image['pointData']['values']
     pixel_type = vtk_image['pointData']['dataType']
 
@@ -156,29 +204,7 @@ def vtk_to_itk_image(key, vtk_image):
 
     return itkImage
 
-#@adapter(is_itk_image, attachments=True)
-#def itk_to_vtk_image(itk_image, addAttachment):
-#    dims = list(itk_image.GetLargestPossibleRegion().GetSize())
-#    extent = []
-#    for v in dims:
-#        extent.append(0)
-#        extent.append(v - 1)
-#
-#    values = itk.GetArrayFromImage(itk_image).flatten(order='C')
-#
-#    return {
-#        'vtkClass': 'vtkImageData',
-#        'spacing': list(itk_image.GetSpacing()),
-#        'origin': list(itk_image.GetOrigin()),
-#        'extent': extent,
-#        'direction': list(itk.GetArrayFromVnlMatrix(itk_image.GetDirection().GetVnlMatrix().as_matrix()).flatten()),
-#        'pixelData': {
-#            'values': addAttachment(values.tobytes()),
-#            'dataType': _itk_image_to_type(itk_image),
-#            'numberOfComponents': itk_image.GetNumberOfComponentsPerPixel(),
-#        },
-#    }
-#
+
 #@adapter(lambda o: o['vtkClass'] == 'vtkLabelMap' and is_itk_image(o['imageRepresentation']),
 #        attachments=True)
 #def serialize_labelmap(labelmap, addAttachment):
@@ -190,19 +216,3 @@ def vtk_to_itk_image(key, vtk_image):
 #    labelmap['imageRepresentation'] = vtk_to_itk_image(labelmap['imageRepresentation'])
 #    return labelmap
 #
-#@adapter(lambda o: type(o).__name__ == 'itkTubeSpatialObject3')
-#def serialize_tube(tube):
-#    tube_points = []
-#    for i in range(tube.GetNumberOfPoints()):
-#        point = tube.GetPoint(i)
-#        tube_points.append({
-#            'point': list(point.GetPositionInObjectSpace()),
-#            'radius': point.GetRadiusInObjectSpace(),
-#        })
-#
-#    return {
-#        'id': tube.GetId(),
-#        'points': tube_points,
-#        'color': list(tube.GetProperty().GetColor()),
-#        'parent': tube.GetParentId(),
-#    }

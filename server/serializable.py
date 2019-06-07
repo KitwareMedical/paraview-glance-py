@@ -3,6 +3,12 @@ import copy
 serializers = []
 unserializers = []
 
+def clone(o):
+    try:
+        return copy.copy(o)
+    except:
+        return o
+
 class JSONRecurser(object):
     def __init__(self):
         self.transformers = []
@@ -13,19 +19,19 @@ class JSONRecurser(object):
     def replace(self, key, value):
         for transformer, tester in self.transformers:
             flag = False
+
             try:
                 flag = tester(key, value)
             except Exception as e:
                 # TODO debug log exception
                 pass
-                
-        if flag:
-            return transformer(key, value)
+
+            if flag:
+                return transformer(key, value)
+
         return value
 
     def recurse(self, obj, extra_transformer=lambda k, v: v):
-        obj = copy.deepcopy(obj)
-
         def replacer(key, value):
             new_value = self.replace(key, value)
             return extra_transformer(key, new_value)
@@ -33,6 +39,7 @@ class JSONRecurser(object):
         return self._recurse(replacer(None, obj), replacer)
 
     def _recurse(self, obj, replacer):
+        obj = clone(obj)
         if type(obj) is dict:
             for key in obj:
                 value = obj[key]

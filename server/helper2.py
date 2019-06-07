@@ -1,6 +1,7 @@
 import weakref
 import uuid
 
+import numpy
 import wslink
 from wslink.websocket import LinkProtocol
 
@@ -17,7 +18,8 @@ def rpc(name):
 
 
             def attachment_replacer(key, value):
-                print('addAttachment')
+                if type(value) is numpy.ndarray:
+                    return self.addAttachment(value.tobytes())
                 return value
 
             return {

@@ -155,10 +155,10 @@ const actions = {
    */
   uploadExtractionImage: ({ state, rootState }) => {
     const { remote } = rootState;
-    return remote.call(
-      'set_segment_image',
-      remote.persist(state.extractSource.getDataset())
-    );
+    const dataset = state.extractSource.getDataset();
+
+    remote.persist(dataset);
+    return remote.call('set_segment_image', dataset);
   },
 
   /**
