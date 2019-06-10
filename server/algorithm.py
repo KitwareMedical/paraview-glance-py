@@ -12,18 +12,29 @@ class AlgorithmApi(Api):
     def __init__(self):
         super().__init__()
 
-    @rpc('params')
+    @rpc('get_parameters')
     def params(self):
         return [
             {
-                'name': '',
-                'type': 'slider',
+                'name': 'some_num_range',
+                'label': 'some num range',
+                'type': 'range',
                 'range': [0, 100],
-            }
+                'step': 1,
+                'default': 50,
+            },
+            {
+                'name': 'some_bool',
+                'label': 'some bool',
+                'type': 'bool',
+                'default': True,
+            },
         ]
 
     @rpc('run')
-    def run(self, input_image, input_labelmap):
+    def run(self, input_image, input_labelmap, params=None):
+        params = params or dict()
+
         ImageType = type(input_image)
         out_image = itk.CastImageFilter[ImageType, ImageType].New()(input_image)
 
