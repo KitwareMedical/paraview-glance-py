@@ -62,6 +62,9 @@ export default {
       }
       return null;
     },
+    canPaint() {
+      return !!this.master && !!this.labelmapProxy;
+    },
   },
   proxyManager: {
     onProxyRegistrationChange(info) {
