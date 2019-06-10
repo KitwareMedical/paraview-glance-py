@@ -1,9 +1,13 @@
 import Vue from 'vue';
 
+import { wrapMutationAsAction } from 'paraview-glance/src/utils';
+
 const createState = () => ({
   inputImage: null,
   inputLabelmap: null,
   outputs: {},
+  parameters: [],
+  args: {},
 });
 
 // export const proxyManagerHooks = {
@@ -41,6 +45,8 @@ const actions = {
     commit('setOutput', { name, source });
   },
 
+  setArgument: wrapMutationAsAction('setArgument'),
+
   run: ({ dispatch, state, rootState }) => {
     const { remote } = rootState;
 
@@ -49,20 +55,30 @@ const actions = {
 
     remote.persist(inputImage);
     remote.persist(inputLabelmap);
-    return remote.call('run', inputImage, inputLabelmap).then((result) => {
-      const { image, imageName, labelmap, labelmapName } = result;
+    return remote
+      .call('run', inputImage, inputLabelmap, state.args)
+      .then((result) => {
+        const { image, imageName, labelmap, labelmapName } = result;
 
-      return Promise.all([
-        dispatch('setOutput', {
-          dataset: image,
-          name: imageName,
-        }),
-        dispatch('setOutput', {
-          dataset: labelmap,
-          name: labelmapName,
-        }),
-      ]);
-    });
+        return Promise.all([
+          dispatch('setOutput', {
+            dataset: image,
+            name: imageName,
+          }),
+          dispatch('setOutput', {
+            dataset: labelmap,
+            name: labelmapName,
+          }),
+        ]);
+      });
+  },
+
+  loadParameters: ({ commit, rootState }) => {
+    const { remote } = rootState;
+
+    remote
+      .call('get_parameters')
+      .then((params) => commit('setParameters', params));
   },
 };
 
@@ -78,6 +94,18 @@ const mutations = {
       Vue.set(state.outputs, name, null);
     }
     state.outputs[name] = source;
+  },
+  setParameters: (state, params) => {
+    state.parameters = params;
+
+    // reset args
+    state.args = {};
+    params.forEach((param) => Vue.set(state.args, param.name, param.default));
+  },
+  setArgument: (state, { name, value }) => {
+    if (name in state.args) {
+      state.args[name] = value;
+    }
   },
 };
 

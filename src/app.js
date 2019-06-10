@@ -106,7 +106,10 @@ export function createViewer(container, proxyConfig = null) {
       } = vtkURLExtract.extractURLParameters();
 
       if (wsServer && typeof wsServer === 'string') {
-        store.dispatch(Actions.CONNECT_REMOTE, wsServer);
+        store
+          .dispatch(Actions.CONNECT_REMOTE, wsServer)
+          // load parameters from server
+          .then(() => store.dispatch('processData/loadParameters'));
       }
 
       if (name && url) {

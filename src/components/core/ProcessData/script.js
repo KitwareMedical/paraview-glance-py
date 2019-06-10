@@ -8,14 +8,12 @@ import ProxyManagerMixin from 'paraview-glance/src/mixins/ProxyManagerMixin';
 export default {
   name: 'ProcessData',
   mixins: [ProxyManagerMixin],
-  data() {
-    return {};
-  },
   computed: {
-    ...mapState({
-      proxyManager: 'proxyManager',
-      inputImage: (state) => {
-        const { processData } = state;
+    ...mapState(['proxyManager']),
+    ...mapState('processData', {
+      parameters: 'parameters',
+      args: 'args',
+      inputImage: (processData) => {
         if (processData.inputImage) {
           return {
             name: processData.inputImage.getName(),
@@ -24,8 +22,7 @@ export default {
         }
         return null;
       },
-      inputLabelmap: (state) => {
-        const { processData } = state;
+      inputLabelmap: (processData) => {
         if (processData.inputLabelmap) {
           return {
             name: processData.inputLabelmap.getName(),
@@ -48,10 +45,10 @@ export default {
     },
   },
   methods: {
-    ...mapActions({
-      processData: 'processData/run',
-      setInputImage: 'processData/setInputImage',
-      setInputLabelmap: 'processData/setInputLabelmap',
+    ...mapActions('processData', {
+      processData: 'run',
+      setInputImage: 'setInputImage',
+      setInputLabelmap: 'setInputLabelmap',
     }),
     getAvailableDatasets(type) {
       return this.proxyManager
@@ -61,6 +58,9 @@ export default {
           name: s.getName(),
           sourceId: s.getProxyId(),
         }));
+    },
+    setArgument(name, value) {
+      this.$store.dispatch('processData/setArgument', { name, value });
     },
   },
 };
