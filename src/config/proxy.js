@@ -20,7 +20,7 @@ import proxyLinks from 'paraview-glance/src/config/proxyLinks';
 import proxyFilter from 'paraview-glance/src/config/proxyFilter';
 import proxyViewRepresentationMapping from 'paraview-glance/src/config/proxyViewRepresentationMapping';
 
-import vtkTubeGroupRepresentationProxy from 'paraview-glance/src/models/TubeGroupRepresentationProxy';
+import vtkTubeGroupRepresentationProxy from 'paraview-glance/src/vtk/TubeGroupRepresentationProxy';
 
 const { createProxyDefinition, activateOnCreate } = ConfigUtils;
 

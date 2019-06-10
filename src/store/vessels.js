@@ -2,7 +2,7 @@ import vtkAppendPolyData from 'vtk.js/Sources/Filters/General/AppendPolyData';
 import vtkPolyData from 'vtk.js/Sources/Common/DataModel/PolyData';
 import vtkDataArray from 'vtk.js/Sources/Common/Core/DataArray';
 
-import vtkTubeGroup from 'paraview-glance/src/models/TubeGroup';
+import vtkTubeGroup from 'paraview-glance/src/vtk/TubeGroup';
 import {
   convertStripsToPolys,
   centerlineToTube,
