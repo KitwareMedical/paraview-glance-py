@@ -1,19 +1,11 @@
 import macro from 'vtk.js/Sources/macro';
-import vtkPolyData from 'vtk.js/Sources/Common/DataModel/PolyData';
+import vtkDataSet from 'vtk.js/Sources/Common/DataModel/DataSet';
 
 // ----------------------------------------------------------------------------
 // vtkTubeGroup methods
 // ----------------------------------------------------------------------------
 
 function vtkTubeGroup(publicAPI, model) {
-  if (model.polyData && model.polyData.getClassName() === 'vtkPolyData') {
-    publicAPI.shallowCopy(model.polyData);
-    // do not keep a reference to it
-    model.polyData = null;
-  }
-
-  // Set our className AFTER shallow copying the polydata
-  // This is a workaround to shallowCopy()
   model.classHierarchy.push('vtkTubeGroup');
 }
 
@@ -23,6 +15,7 @@ function vtkTubeGroup(publicAPI, model) {
 
 const DEFAULT_VALUES = {
   polyData: null,
+  labelMap: null,
 };
 
 // ----------------------------------------------------------------------------
@@ -30,7 +23,9 @@ const DEFAULT_VALUES = {
 export function extend(publicAPI, model, initialValues = {}) {
   Object.assign(model, DEFAULT_VALUES, initialValues);
 
-  vtkPolyData.extend(publicAPI, model);
+  vtkDataSet.extend(publicAPI, model);
+
+  macro.setGet(publicAPI, model, ['polyData', 'labelMap']);
 
   // Object specific methods
   vtkTubeGroup(publicAPI, model);

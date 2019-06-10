@@ -32,6 +32,10 @@ function vtkTubeGroupRepresentationProxy(publicAPI, model) {
       true // not all mappers have the above fields
     );
   };
+
+  model.sourceDependencies = model.sourceDependencies.map((dep) => ({
+    setInputData: (tubeGroup) => dep.setInputData(tubeGroup.getPolyData()),
+  }));
 }
 
 // ----------------------------------------------------------------------------

@@ -172,41 +172,50 @@ const actions = {
         commit('addTube', centerline);
         return dispatch('updateTubeSource');
       }
-      return Promise.resolve();
+      return null;
     });
   },
 
   /**
-   * Updates tube source by rebuilding tube polydata.
+   * Updates tube source by regenerating tube data.
    */
-  updateTubeSource: ({ commit, dispatch, state, rootState }) =>
-    dispatch('rebuildTubePolyData').then(() => {
-      const { proxyManager } = rootState;
+  updateTubeSource: ({ commit, dispatch, state, rootState }) => {
+    const { proxyManager } = rootState;
 
-      let { tubePdSource: tubeSource } = state;
+    // const p1 = remote.call('get_tube_image');
+    const p2 = dispatch('rebuildTubePolyData');
+
+    return Promise.all([p2]).then(([tubeGroup]) => {
+      const activeSource = proxyManager.getActiveSource();
+
+      let tubeSource = state.tubeSource;
+
       if (!tubeSource) {
-        const activeSource = proxyManager.getActiveSource();
         tubeSource = proxyManager.createProxy('Sources', 'TrivialProducer', {
           name: 'Tubes',
         });
-        activeSource.activate();
       }
 
-      tubeSource.setInputData(state.tubePolyData);
+      tubeSource.setInputData(tubeGroup);
 
       proxyManager.createRepresentationInAllViews(tubeSource);
+
+      // set tube polydata colors
       proxyManager
         .getRepresentations()
         .filter((r) => r.getInput() === tubeSource)
         .forEach((rep) => rep.setColorBy('Colors', 'cellData'));
 
       commit('setTubeSource', tubeSource);
-    }),
+
+      activeSource.activate();
+    });
+  },
 
   /**
    * Rebuilds tube polydata.
    */
-  rebuildTubePolyData: ({ commit, state }) => {
+  rebuildTubePolyData: ({ state }) => {
     const filter = vtkAppendPolyData.newInstance();
     filter.setInputData(vtkPolyData.newInstance());
 
@@ -217,10 +226,7 @@ const actions = {
       numberOfCells += tubePd.getNumberOfCells();
     }
 
-    /* eslint-disable-next-line import/no-named-as-default-member */
-    const tubeGroup = vtkTubeGroup.newInstance({
-      polyData: filter.getOutputData(),
-    });
+    const polyData = filter.getOutputData();
 
     // add colors
     const colorsData = new Uint8Array(4 * numberOfCells);
@@ -242,7 +248,7 @@ const actions = {
       numberOfComponents: 4,
     });
 
-    tubeGroup.getCellData().addArray(colors);
+    polyData.getCellData().addArray(colors);
 
     // rebuild cellToTubeId
     // this.cellToTubeId = new Array(this.order.length);
@@ -254,7 +260,8 @@ const actions = {
     //   this.cellToTubeId[i] = [cumulativeCellCount, id];
     // }
 
-    commit('setTubePolyData', tubeGroup);
+    /* eslint-disable-next-line import/no-named-as-default-member */
+    return vtkTubeGroup.newInstance({ polyData });
   },
 
   /**
