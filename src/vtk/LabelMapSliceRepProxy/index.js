@@ -20,14 +20,8 @@ function vtkLabelMapSliceRepProxy(publicAPI, model) {
   model.classHierarchy.push('vtkLabelMapSliceRepProxy');
 
   const labelMapSub = makeSubManager();
-  // syncSource slice -> labelmap slice
-  const syncSub = makeSubManager();
-  // labelmap slice -> syncSource slice
-  const sliceSub = makeSubManager();
 
   model.property.setInterpolationType(InterpolationType.NEAREST);
-
-  model.syncSource = null;
 
   function updateTransferFunctions(labelmap) {
     const colorMap = labelmap.getColorMap();
@@ -59,11 +53,7 @@ function vtkLabelMapSliceRepProxy(publicAPI, model) {
   // override because we manage our own color/opacity transfer functions
   publicAPI.setColorBy = () => {};
 
-  publicAPI.delete = macro.chain(publicAPI.delete, () => {
-    labelMapSub.unsub();
-    syncSub.unsub();
-    sliceSub.unsub();
-  });
+  publicAPI.delete = macro.chain(publicAPI.delete, () => labelMapSub.unsub());
 
   model.sourceDependencies = model.sourceDependencies.map((dep) => ({
     setInputData: (labelMap) =>
@@ -78,9 +68,7 @@ function vtkLabelMapSliceRepProxy(publicAPI, model) {
 // Object factory
 // ----------------------------------------------------------------------------
 
-const DEFAULT_VALUES = {
-  syncSource: null,
-};
+const DEFAULT_VALUES = {};
 
 // ----------------------------------------------------------------------------
 
@@ -89,8 +77,6 @@ export function extend(publicAPI, model, initialValues = {}) {
 
   // Object methods
   vtkSliceRepresentationProxy.extend(publicAPI, model);
-
-  macro.setGet(publicAPI, model, ['syncSource']);
 
   // Object specific methods
   vtkLabelMapSliceRepProxy(publicAPI, model);
