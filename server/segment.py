@@ -8,13 +8,23 @@ import random
 
 from helper2 import Api, rpc
 
+def generate_tube_colormap(group):
+    colormap = {}
+    children = group.GetChildren(1) # recursive
+    for idx in range(len(children)):
+        child = itk.down_cast(children[idx])
+        colormap[child.GetId()] = [c * 255 for c in child.GetProperty().GetColor()]
+
+    return colormap
+
 class SegmentApi(Api):
     def __init__(self):
         super().__init__()
         self.segmenter = None
         self.input_image = None
-        self.next_tube_id = 0
+        self.next_tube_id = 1
         self.tube_id_mapping = {}
+        self.tube_image = None
 
     @rpc('preprocess')
     def preprocess(self, image, filters):
@@ -64,8 +74,42 @@ class SegmentApi(Api):
         if tube is not None:
             self.segmenter.AddTube(tube)
             self.tube_id_mapping[tube.GetId()] = tube
+            tube.SetDefaultInsideValue(self.next_tube_id)
+            tube.SetDefaultOutsideValue(0)
+            # required to update inside/outside value
+            tube.Update()
             self.next_tube_id += 1
+
             return tube
+
+    @rpc('get_tube_image')
+    def get_tube_image(self):
+        if self.segmenter is None:
+            raise Exception('segment image is not set')
+
+        tube_group = self.segmenter.GetTubeGroup()
+
+        f = itk.SpatialObjectToImageFilter[itk.SpatialObject[3], itk.Image[itk.SS, 3]].New()
+
+        # same origin and spacing and dir as input_image
+        f.SetOrigin(self.input_image.GetOrigin())
+        f.SetSpacing(self.input_image.GetSpacing())
+        f.SetDirection(self.input_image.GetDirection())
+        f.SetSize(self.input_image.GetLargestPossibleRegion().GetSize())
+
+        f.SetUseObjectValue(True)
+        f.SetOutsideValue(0)
+
+        f.SetInput(tube_group)
+        f.Update()
+
+        self.tube_image = f.GetOutput()
+
+        return {
+            'vtkClass': 'vtkLabelMap',
+            'imageRepresentation': self.tube_image,
+            'colorMap': generate_tube_colormap(tube_group),
+        }
 
     @rpc('delete_tubes')
     def delete_tubes(self, tube_ids):

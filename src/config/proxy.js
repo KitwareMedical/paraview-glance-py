@@ -20,7 +20,8 @@ import proxyLinks from 'paraview-glance/src/config/proxyLinks';
 import proxyFilter from 'paraview-glance/src/config/proxyFilter';
 import proxyViewRepresentationMapping from 'paraview-glance/src/config/proxyViewRepresentationMapping';
 
-import vtkTubeGroupRepresentationProxy from 'paraview-glance/src/vtk/TubeGroupRepresentationProxy';
+import vtkTubeGroupPolyDataRepresentationProxy from 'paraview-glance/src/vtk/TubeGroupPolyDataRepresentationProxy';
+import vtkTubeGroupLabelMapRepresentationProxy from 'paraview-glance/src/vtk/TubeGroupLabelMapRepresentationProxy';
 
 const { createProxyDefinition, activateOnCreate } = ConfigUtils;
 
@@ -80,8 +81,13 @@ export default {
         proxyUI.Geometry,
         proxyLinks.Geometry
       ),
-      TubeGroup: createProxyDefinition(
-        vtkTubeGroupRepresentationProxy,
+      TubeGroupPolyData: createProxyDefinition(
+        vtkTubeGroupPolyDataRepresentationProxy,
+        proxyUI.TubeGroup,
+        proxyLinks.TubeGroup
+      ),
+      TubeGroupLabelMap: createProxyDefinition(
+        vtkTubeGroupLabelMapRepresentationProxy,
         proxyUI.TubeGroup,
         proxyLinks.TubeGroup
       ),

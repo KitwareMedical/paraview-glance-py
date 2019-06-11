@@ -3,12 +3,12 @@ import vtkMapper from 'vtk.js/Sources/Rendering/Core/Mapper';
 import vtkGeometryRepresentationProxy from 'vtk.js/Sources/Proxy/Representations/GeometryRepresentationProxy';
 
 // ----------------------------------------------------------------------------
-// vtkTubeGroupRepresentationProxy methods
+// vtkTubeGroupPolyDataRepresentationProxy methods
 // ----------------------------------------------------------------------------
 
-function vtkTubeGroupRepresentationProxy(publicAPI, model) {
+function vtkTubeGroupPolyDataRepresentationProxy(publicAPI, model) {
   // Set our className
-  model.classHierarchy.push('vtkTubeGroupRepresentationProxy');
+  model.classHierarchy.push('vtkTubeGroupPolyDataRepresentationProxy');
 
   // override setColorBy implementation
   publicAPI.setColorBy = (arrayName, arrayLocation) => {
@@ -53,14 +53,14 @@ export function extend(publicAPI, model, initialValues = {}) {
   vtkGeometryRepresentationProxy.extend(publicAPI, model);
 
   // Object specific methods
-  vtkTubeGroupRepresentationProxy(publicAPI, model);
+  vtkTubeGroupPolyDataRepresentationProxy(publicAPI, model);
 }
 
 // ----------------------------------------------------------------------------
 
 export const newInstance = macro.newInstance(
   extend,
-  'vtkTubeGroupRepresentationProxy'
+  'vtkTubeGroupPolyDataRepresentationProxy'
 );
 
 // ----------------------------------------------------------------------------

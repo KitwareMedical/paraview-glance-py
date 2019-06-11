@@ -172,6 +172,11 @@ def serialize_tube(key, tube):
         'parent': tube.GetParentId(),
     }
 
+@serializer(lambda k, v: v['vtkClass'] == 'vtkLabelMap')
+def serialize_labelmap(key, labelmap):
+    labelmap['imageRepresentation'] = itk_to_vtk_image(key, labelmap['imageRepresentation'])
+    return labelmap
+
 #################
 # Unserializers #
 #################
@@ -204,15 +209,7 @@ def vtk_to_itk_image(key, vtk_image):
 
     return itkImage
 
-
-#@adapter(lambda o: o['vtkClass'] == 'vtkLabelMap' and is_itk_image(o['imageRepresentation']),
-#        attachments=True)
-#def serialize_labelmap(labelmap, addAttachment):
-#    labelmap['imageRepresentation'] = itk_to_vtk_image(labelmap['imageRepresentation'], addAttachment)
-#    return labelmap
-#
-#@adapter(lambda o: o['vtkClass'] == 'vtkLabelMap' and type(o['imageRepresentation']) is dict)
-#def unserialize_labelmap(labelmap):
-#    labelmap['imageRepresentation'] = vtk_to_itk_image(labelmap['imageRepresentation'])
-#    return labelmap
-#
+@unserializer(lambda k, v: v['vtkClass'] == 'vtkLabelMap')
+def unserialize_labelmap(key, labelmap):
+    labelmap['imageRepresentation'] = vtk_to_itk_image(key, labelmap['imageRepresentation'])
+    return labelmap
