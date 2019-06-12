@@ -129,6 +129,9 @@ export default {
     }),
     setExtractionImageById(sourceId) {
       this.setExtractionSource(this.proxyManager.getProxyById(sourceId));
+      if (this.enabled) {
+        this.readyPromise = this.uploadExtractionImage();
+      }
     },
     getAvailableImages() {
       return this.proxyManager
