@@ -6,17 +6,6 @@ import {
   registerReviver,
 } from 'paraview-glance/src/serializable';
 
-function blobToTypedArray(blob, type) {
-  return new Promise((resolve, reject) => {
-    const fileReader = new FileReader();
-    fileReader.onload = (event) => {
-      resolve(new window[type](event.target.result));
-    };
-    fileReader.onerror = (event) => reject(event.error);
-    fileReader.readAsArrayBuffer(blob);
-  });
-}
-
 // replacer methods ------------------------------------------------------------
 
 function fromVtkDataArray(key, da) {
@@ -63,24 +52,23 @@ registerReplacer(fromVtkLabelMap);
 
 function toVtkImage(key, value) {
   if (value && value.vtkClass === 'vtkImageData') {
-    const { values, dataType } = value.pointData;
-    return blobToTypedArray(values, dataType).then((pointData) => {
-      const image = vtkImageData.newInstance({
-        origin: value.origin,
-        spacing: value.spacing,
-        direction: value.direction,
-        extent: value.extent,
-      });
+    const { values: pointData } = value.pointData;
 
-      image.getPointData().setScalars(
-        vtkDataArray.newInstance({
-          numberOfComponents: value.pointData.numberOfComponents,
-          values: pointData,
-        })
-      );
-
-      return image;
+    const image = vtkImageData.newInstance({
+      origin: value.origin,
+      spacing: value.spacing,
+      direction: value.direction,
+      extent: value.extent,
     });
+
+    image.getPointData().setScalars(
+      vtkDataArray.newInstance({
+        numberOfComponents: value.pointData.numberOfComponents,
+        values: pointData,
+      })
+    );
+
+    return image;
   }
   return undefined;
 }

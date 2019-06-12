@@ -19,7 +19,11 @@ def rpc(name):
 
             def attachment_replacer(key, value):
                 if type(value) is numpy.ndarray:
-                    return self.addAttachment(value.tobytes())
+                    return {
+                        '$type': 'ArrayBuffer',
+                        'dataType': str(value.dtype),
+                        'buffer': self.addAttachment(value.tobytes()),
+                    }
                 return value
 
             return {

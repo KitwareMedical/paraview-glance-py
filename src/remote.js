@@ -4,6 +4,46 @@ import * as serializable from 'paraview-glance/src/serializable';
 // register transformers
 import 'paraview-glance/src/transformers';
 
+function generateConversionLookup(conversions) {
+  const lookup = {};
+  for (let i = 0; i < conversions.length; i++) {
+    const conversion = conversions[i];
+    const keys = Object.keys(conversion);
+    for (let j = 0; j < keys.length; j++) {
+      lookup[conversion[keys[j]]] = conversion;
+    }
+  }
+  return lookup;
+}
+
+const TypeConversions = generateConversionLookup([
+  { js: 'Uint8Array', numpy: 'uint8' },
+  { js: 'Int8Array', numpy: 'int8' },
+  { js: 'Uint16Array', numpy: 'uint16' },
+  { js: 'Int16Array', numpy: 'int16' },
+  { js: 'Uint32Array', numpy: 'uint32' },
+  { js: 'Int32Array', numpy: 'int32' },
+  { js: 'Float32Array', numpy: 'float32' },
+  { js: 'Float64Array', numpy: 'float64' },
+]);
+
+function blobToTypedArray(key, value) {
+  if (value && value.$type === 'ArrayBuffer') {
+    const { dataType, buffer: blob } = value;
+    const type = TypeConversions[dataType].js;
+
+    return new Promise((resolve, reject) => {
+      const fileReader = new FileReader();
+      fileReader.onload = (event) => {
+        resolve(new window[type](event.target.result));
+      };
+      fileReader.onerror = (event) => reject(event.error);
+      fileReader.readAsArrayBuffer(blob);
+    });
+  }
+  return value;
+}
+
 function defer() {
   let resolve;
   let reject;
@@ -70,7 +110,7 @@ function connect(endpoint) {
         }
       }
 
-      return serializable.revert(data).then((obj) => {
+      return serializable.revert(data, blobToTypedArray).then((obj) => {
         if (uid) {
           objDir.set(obj, uid);
         }

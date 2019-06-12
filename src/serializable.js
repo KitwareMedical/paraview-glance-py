@@ -2,7 +2,9 @@ const replacers = [];
 
 const revivers = [];
 
-function recurse(obj, fn) {
+const defIdent = (k, v) => Promise.resolve(v);
+
+function recurse(obj, preFn = defIdent, postFn = defIdent) {
   const clone = function clone(o) {
     if (Array.isArray(o)) {
       return o.slice();
@@ -30,9 +32,12 @@ function recurse(obj, fn) {
     if (Array.isArray(o)) {
       for (let i = 0; i < o.length; i++) {
         promises.push(
-          fn(i, clone(o[i]))
+          Promise.resolve(clone(o[i]))
+            .then((newValue) => preFn(i, newValue))
             .then((newValue) => set(o, i, newValue))
             .then(helpRecurse)
+            .then((newValue) => postFn(i, newValue))
+            .then((newValue) => set(o, i, newValue))
         );
       }
     } else if (
@@ -50,9 +55,12 @@ function recurse(obj, fn) {
         // vtk.js objects disable overwriting func properties
         if (descriptor.writable) {
           promises.push(
-            fn(key, clone(o[key]))
+            Promise.resolve(clone(o[key]))
+              .then((newValue) => preFn(key, newValue))
               .then((newValue) => set(o, key, newValue))
               .then(helpRecurse)
+              .then((newValue) => postFn(key, newValue))
+              .then((newValue) => set(o, key, newValue))
           );
         }
       }
@@ -60,7 +68,9 @@ function recurse(obj, fn) {
     return Promise.all(promises).then(() => clone(o));
   };
 
-  return fn(undefined, clone(obj)).then(helpRecurse);
+  return preFn(undefined, clone(obj))
+    .then(helpRecurse)
+    .then((newObj) => postFn(undefined, newObj));
 }
 
 function replacer(key, value) {
@@ -95,7 +105,7 @@ export function prepare(obj, otherReplacer = null) {
 export function revert(obj, otherReviver = null) {
   const revFunc = otherReviver || ((key, value) => value);
 
-  return recurse(obj, (key, value) => {
+  return recurse(obj, undefined, (key, value) => {
     const newValue = reviver(key, value);
     return Promise.resolve(newValue).then((v) => revFunc(key, v));
   });
