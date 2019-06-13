@@ -1,12 +1,7 @@
-import { mapActions, mapState, createNamespacedHelpers } from 'vuex';
+import { mapActions, mapState } from 'vuex';
 import vtk from 'vtk.js/Sources/vtk';
 
 import ProxyManagerMixin from 'paraview-glance/src/mixins/ProxyManagerMixin';
-
-const {
-  mapActions: mapVesselActions,
-  mapState: mapVesselState,
-} = createNamespacedHelpers('vessels');
 
 // ----------------------------------------------------------------------------
 
@@ -61,6 +56,9 @@ export default {
     },
   },
   methods: {
+    ...mapActions({
+      setExtractionSource: 'vessels/setExtractionSource',
+    }),
     setInputImage(sourceId) {
       this.inputSourceId = sourceId;
     },
@@ -117,7 +115,7 @@ export default {
             this.outputSource.setInputData(vtkImage);
             this.proxyManager.createRepresentationInAllViews(this.outputSource);
 
-            // TODO set output as extraction image
+            this.setExtractionSource(this.outputSource);
           })
           .finally(() => {
             this.loading = false;

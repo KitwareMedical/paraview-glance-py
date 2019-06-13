@@ -12,7 +12,6 @@ import {
 
 const createState = () => ({
   inputSource: null,
-  preProcessedSource: null,
   tubeSource: null,
   extractSource: null,
   /* eslint-disable-next-line import/no-named-as-default-member */
@@ -36,7 +35,7 @@ export const proxyManagerHooks = {
     }
 
     if (action === 'unregister') {
-      const { inputSource, preProcessedSource, tubeSource } = state.vessels;
+      const { inputSource, tubeSource } = state.vessels;
 
       // const { remote } = store.state;
 
@@ -45,12 +44,6 @@ export const proxyManagerHooks = {
         // remote.removeObject(inputSource.getDataset())
         // TODO delete from server
         store.dispatch('vessels/setInputSource', null);
-      }
-
-      if (preProcessedSource) {
-        // TODO delete from server
-        // remote.removeObject(preProcessedSource.getDataset())
-        store.dispatch('vessels/setPreProcessedSource', null);
       }
 
       if (tubeSource) {
@@ -65,7 +58,6 @@ export function serialize(state) {
 
   return {
     inputSource: idCombinator(state.inputSource),
-    preProcessedSource: idCombinator(state.preProcessedSource),
     tubeSource: idCombinator(state.tubeSource),
     tubes: state.tubes,
   };
@@ -82,7 +74,6 @@ export function unserialize(serialized, pxm) {
 
   return Object.assign(newState, {
     inputSource: proxyCombinator(serialized.inputSource),
-    preProcessedSource: proxyCombinator(serialized.preProcessedSource),
     tubeSource: proxyCombinator(serialized.tubeSource),
     tubesLookup,
   });
@@ -100,46 +91,14 @@ const actions = {
   },
 
   /**
-   * Sets the preprocessed image.
-   */
-  setPreProcessedImage: ({ dispatch, state, rootState }, vtkImage) => {
-    const pxm = rootState.proxyManager;
-
-    let source = state.preProcessedSource;
-    if (!source) {
-      const name = state.inputSource ? state.inputSource.getName() : 'Image';
-      source = pxm.createProxy('Sources', 'TrivialProducer', {
-        name: `Pre-processed ${name}`,
-      });
-    }
-
-    source.setInputData(vtkImage);
-    pxm.createRepresentationInAllViews(source);
-
-    return dispatch('setPreProcessedSource', source);
-  },
-
-  /**
-   * Sets the preprocessed source.
-   *
-   * This differs from setPreProcessedImage in that the other action
-   * accepts a vtk image, and will create a source if one doesn't already
-   * exist.
-   *
-   * This will automatically set the extraction source as well.
-   */
-  setPreProcessedSource: ({ dispatch, commit }, source) => {
-    commit('setPreProcessedSource', source);
-    return dispatch('setExtractionSource', source);
-  },
-
-  /**
    * Sets extraction source.
    */
   setExtractionSource: ({ commit, rootState }, source) => {
     const { proxyManager } = rootState;
 
     source.activate();
+
+    // hide all other vtkImageData
     proxyManager.getRepresentations().forEach((rep) => {
       if (rep.getInput() === source) {
         rep.setVisibility(true);
@@ -379,9 +338,6 @@ const actions = {
 const mutations = {
   setInputSource: (state, source) => {
     state.inputSource = source;
-  },
-  setPreProcessedSource: (state, source) => {
-    state.preProcessedSource = source;
   },
   setExtractionSource: (state, source) => {
     state.extractSource = source;
