@@ -11,7 +11,7 @@ import {
 } from 'paraview-glance/src/utils';
 
 const createState = () => ({
-  tubeSource: null,
+  tubeSourceId: -1,
   extractionSourceId: -1,
   /* eslint-disable-next-line import/no-named-as-default-member */
   tubePolyData: vtkTubeGroup.newInstance(),
@@ -23,65 +23,47 @@ const createState = () => ({
 const vesselGetters = {
   extractionSource: (state, getters, rootState) =>
     rootState.proxyManager.getProxyById(state.extractionSourceId),
+  tubeSource: (state, getters, rootState) =>
+    rootState.proxyManager.getProxyById(state.tubeSourceId),
 };
 
 export const proxyManagerHooks = {
   onProxyRegistrationChange: (store) => (info) => {
-    const { proxy, proxyGroup, action, proxyId } = info;
-    const { state } = store;
+    const { proxy, proxyGroup, action } = info;
+    const { getters } = store;
 
     if (
       action === 'register' &&
       proxyGroup === 'Representations' &&
-      proxy.getInput() === state.vessels.tubeSource
+      proxy.getInput() === getters['vessels/tubeSource'] &&
+      proxy.getClassName() === 'vtkTubeGroupPolyDataRepresentationProxy'
     ) {
       proxy.setColorBy('Colors', 'cellData');
-    }
-
-    if (action === 'unregister') {
-      const { inputSource, tubeSource } = state.vessels;
-
-      // const { remote } = store.state;
-
-      if (inputSource && inputSource.getProxyId() === proxyId) {
-        // just to make sure we remove it from the shared object pool
-        // remote.removeObject(inputSource.getDataset())
-        // TODO delete from server
-        store.dispatch('vessels/setInputSource', null);
-      }
-
-      if (tubeSource) {
-        // TODO delete tubes locally and on server
-      }
     }
   },
 };
 
-export function serialize(state) {
-  const idCombinator = (src) => (src ? src.getProxyId() : null);
-
-  return {
-    inputSource: idCombinator(state.inputSource),
-    tubeSource: idCombinator(state.tubeSource),
-    tubes: state.tubes,
-  };
-}
-
-export function unserialize(serialized, pxm) {
-  const newState = createState();
-  const proxyCombinator = (id) => (id !== null ? pxm.getProxyById(id) : null);
-
-  const tubesLookup = {};
-  for (let i = 0; i < serialized.tubes.length; i++) {
-    tubesLookup[serialized.tubes[i].id] = i;
-  }
-
-  return Object.assign(newState, {
-    inputSource: proxyCombinator(serialized.inputSource),
-    tubeSource: proxyCombinator(serialized.tubeSource),
-    tubesLookup,
-  });
-}
+// export function serialize(state) {
+//   const idCombinator = (src) => (src ? src.getProxyId() : null);
+//
+//   return {
+//     tubes: state.tubes,
+//   };
+// }
+//
+// export function unserialize(serialized, pxm) {
+//   const newState = createState();
+//   const proxyCombinator = (id) => (id !== null ? pxm.getProxyById(id) : null);
+//
+//   const tubesLookup = {};
+//   for (let i = 0; i < serialized.tubes.length; i++) {
+//     tubesLookup[serialized.tubes[i].id] = i;
+//   }
+//
+//   return Object.assign(newState, {
+//     tubesLookup,
+//   });
+// }
 
 const actions = {
   /**
@@ -151,21 +133,22 @@ const actions = {
    * Updates tube source by regenerating tube data.
    */
   updateTubeSource: (
-    { commit, state, getters, rootState },
+    { commit, getters, rootState },
     { tube, tubeMaskRle, polyData }
   ) => {
     const { proxyManager } = rootState;
 
-    let tubeSource = state.tubeSource;
+    let tubeSource = getters.tubeSource;
     if (!tubeSource) {
       const activeSource = proxyManager.getActiveSource();
 
       tubeSource = proxyManager.createProxy('Sources', 'TrivialProducer', {
         name: 'Tubes',
       });
-
       /* eslint-disable-next-line import/no-named-as-default-member */
       tubeSource.setInputData(vtkTubeGroup.newInstance());
+
+      commit('setTubeSourceId', tubeSource.getProxyId());
 
       activeSource.activate();
     }
@@ -230,19 +213,8 @@ const actions = {
       [tube.id]: tube.color.map((c) => c * 255),
     });
 
+    // tube polydata colors are set in the proxy manager hook
     proxyManager.createRepresentationInAllViews(tubeSource);
-
-    // set tube polydata colors
-    proxyManager
-      .getRepresentations()
-      .filter(
-        (r) =>
-          r.getInput() === tubeSource &&
-          r.getClassName() === 'vtkTubeGroupPolyDataRepresentationProxy'
-      )
-      .forEach((rep) => rep.setColorBy('Colors', 'cellData'));
-
-    commit('setTubeSource', tubeSource);
   },
 
   /**
@@ -337,8 +309,8 @@ const mutations = {
   setTubePolyData: (state, group) => {
     state.tubePolyData = group;
   },
-  setTubeSource: (state, source) => {
-    state.tubeSource = source;
+  setTubeSourceId: (state, sourceId) => {
+    state.tubeSourceId = sourceId;
   },
   // TODO what if tube.id exists? Should update. This should handle cases like tube smoothing
   addTube: (state, tube) => {
@@ -409,7 +381,7 @@ export default {
   getters: vesselGetters,
 
   // custom properties
-  serialize,
-  unserialize,
+  // serialize,
+  // unserialize,
   proxyManagerHooks,
 };
