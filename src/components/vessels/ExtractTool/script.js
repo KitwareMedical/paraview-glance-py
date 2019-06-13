@@ -1,4 +1,4 @@
-import { mapActions, mapState } from 'vuex';
+import { mapActions, mapGetters, mapState } from 'vuex';
 import macro from 'vtk.js/Sources/macro';
 import vtkPointPicker from 'vtk.js/Sources/Rendering/Core/PointPicker';
 
@@ -62,17 +62,19 @@ export default {
     ...mapState({
       proxyManager: 'proxyManager',
       remote: 'remote',
-      extractSource: (state) => state.vessels.extractSource,
       numberOfTubes: (state) => state.vessels.tubes.length,
     }),
+    ...mapGetters({
+      extractionSource: 'vessels/extractionSource',
+    }),
     ready() {
-      return this.extractSource && this.enabled;
+      return this.extractionSource && this.enabled;
     },
-    extractionImage() {
-      if (this.extractSource) {
+    selectedImage() {
+      if (this.extractionSource) {
         return {
-          name: this.extractSource.getName(),
-          sourceId: this.extractSource.getProxyId(),
+          name: this.extractionSource.getName(),
+          sourceId: this.extractionSource.getProxyId(),
         };
       }
       return null;
@@ -127,7 +129,7 @@ export default {
       setExtractionSource: 'vessels/setExtractionSource',
       uploadExtractionImage: 'vessels/uploadExtractionImage',
     }),
-    setExtractionImageById(sourceId) {
+    setExtractionImage(sourceId) {
       this.setExtractionSource(this.proxyManager.getProxyById(sourceId));
       if (this.enabled) {
         this.readyPromise = this.uploadExtractionImage();
@@ -144,7 +146,7 @@ export default {
     },
     segmentAtClick(position, view) {
       const point = [position.x, position.y, 0];
-      const source = this.extractSource;
+      const source = this.extractionSource;
 
       pointPicker.initializePickList();
       const rep = this.proxyManager.getRepresentation(source, view);

@@ -7,8 +7,8 @@
         :items="getAvailableImages()"
         item-text="name"
         item-value="sourceId"
-        :value="extractionImage"
-        @input="setExtractionImageById"
+        :value="selectedImage"
+        @input="setExtractionImage"
         hide-details
       />
     </v-flex>
@@ -18,7 +18,7 @@
       <v-switch
         v-model="enabled"
         label="Extract"
-        :disabled="!extractSource"
+        :disabled="!extractionSource"
       />
     </v-flex>
     <v-flex xs6>

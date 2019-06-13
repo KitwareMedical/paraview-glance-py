@@ -13,13 +13,18 @@ import {
 const createState = () => ({
   inputSource: null,
   tubeSource: null,
-  extractSource: null,
+  extractionSourceId: -1,
   /* eslint-disable-next-line import/no-named-as-default-member */
   tubePolyData: vtkTubeGroup.newInstance(),
   tubeCache: {},
   tubes: [],
   tubesLookup: {},
 });
+
+const vesselGetters = {
+  extractionSource: (state, getters, rootState) =>
+    rootState.proxyManager.getProxyById(state.extractionSourceId),
+};
 
 export const proxyManagerHooks = {
   onProxyRegistrationChange: (store) => (info) => {
@@ -108,15 +113,15 @@ const actions = {
       }
     });
 
-    commit('setExtractionSource', source);
+    commit('setExtractionSourceId', source.getProxyId());
   },
 
   /**
    * Uploads extraction image.
    */
-  uploadExtractionImage: ({ state, rootState }) => {
+  uploadExtractionImage: ({ getters, rootState }) => {
     const { remote } = rootState;
-    const dataset = state.extractSource.getDataset();
+    const dataset = getters.extractionSource.getDataset();
 
     remote.persist(dataset);
     return remote.call('set_segment_image', dataset);
@@ -147,7 +152,7 @@ const actions = {
    * Updates tube source by regenerating tube data.
    */
   updateTubeSource: (
-    { commit, state, rootState },
+    { commit, state, getters, rootState },
     { tubeId, tubeMaskRle, polyData }
   ) => {
     const { proxyManager } = rootState;
@@ -181,7 +186,7 @@ const actions = {
     // create labelmap if it doesn't exist
     if (!tubeGroup.getLabelMap()) {
       // clone extraction image
-      const extractionImage = state.extractSource.getDataset();
+      const extractionImage = getters.extractionSource.getDataset();
       const image = vtkImageData.newInstance(
         extractionImage.get('spacing', 'origin', 'direction')
       );
@@ -339,8 +344,8 @@ const mutations = {
   setInputSource: (state, source) => {
     state.inputSource = source;
   },
-  setExtractionSource: (state, source) => {
-    state.extractSource = source;
+  setExtractionSourceId: (state, sourceId) => {
+    state.extractionSourceId = sourceId;
   },
   setTubePolyData: (state, group) => {
     state.tubePolyData = group;
@@ -414,6 +419,7 @@ export default {
   state: createState(),
   actions,
   mutations,
+  getters: vesselGetters,
 
   // custom properties
   serialize,
