@@ -15,6 +15,8 @@ export default {
   mixins: [ProxyManagerMixin],
   data() {
     return {
+      inputSourceId: -1,
+      outputCache: {}, // inputSourceId -> outputSourceId
       filters: ['windowLevel', 'median'],
       enabled: {
         windowLevel: false,
@@ -34,17 +36,21 @@ export default {
   },
   computed: {
     ...mapState(['proxyManager', 'remote']),
-    ...mapVesselState({
-      inputSource: (state) => {
-        if (state.inputSource) {
-          return {
-            name: state.inputSource.getName(),
-            sourceId: state.inputSource.getProxyId(),
-          };
-        }
-        return null;
-      },
-    }),
+    inputSource() {
+      return this.proxyManager.getProxyById(this.inputSourceId);
+    },
+    outputSource() {
+      const outputSourceId = this.outputCache[this.inputSourceId];
+      return this.proxyManager.getProxyById(outputSourceId);
+    },
+    selectedImage() {
+      if (this.inputSource) {
+        return {
+          name: this.inputSource.getName(),
+          sourceId: this.inputSource.getProxyId(),
+        };
+      }
+    },
   },
   proxyManager: {
     onProxyRegistrationChange({ proxyGroup, proxyId }) {
@@ -55,12 +61,8 @@ export default {
     },
   },
   methods: {
-    ...mapVesselActions({
-      setInputSource: 'setInputSource',
-      setPreProcessedImage: 'setPreProcessedImage',
-    }),
-    setInputSourceById(proxyId) {
-      this.setInputSource(this.proxyManager.getProxyById(proxyId));
+    setInputImage(sourceId) {
+      this.inputSourceId = sourceId;
     },
     getAvailableImages() {
       return this.proxyManager
@@ -71,10 +73,8 @@ export default {
           sourceId: s.getProxyId(),
         }));
     },
-    // TODO make this an action
     runFilters() {
-      const source = this.proxyManager.getProxyById(this.inputSource.sourceId);
-      const dataset = source.getDataset();
+      const dataset = this.inputSource.getDataset();
 
       // persist dataset on server b/c it won't change
       this.remote.persist(dataset);
@@ -82,7 +82,7 @@ export default {
       // window-level params are from the 2d representations
       const reps = this.proxyManager
         .getRepresentations()
-        .filter((r) => r.getInput() === source)
+        .filter((r) => r.getInput() === this.inputSource)
         .filter((r) => r.isA('vtkSliceRepresentationProxy'));
       if (reps.length) {
         this.params.windowLevel.width = reps[0].getWindowWidth();
@@ -97,10 +97,27 @@ export default {
         this.loading = true;
         this.remote
           .call('preprocess', dataset, args)
-          .then((vtkResult) => {
-            // TODO vtk() call in serialize.js
-            const outputDataset = vtk(vtkResult);
-            this.setPreProcessedImage(outputDataset);
+          .then((vtkImage) => {
+            if (!this.outputSource) {
+              const source = this.proxyManager.createProxy(
+                'Sources',
+                'TrivialProducer',
+                {
+                  name: `Pre-Processed ${this.inputSource.getName()}`,
+                },
+              );
+
+              this.$set(
+                this.outputCache,
+                this.inputSourceId,
+                source.getProxyId()
+              );
+            }
+
+            this.outputSource.setInputData(vtkImage);
+            this.proxyManager.createRepresentationInAllViews(this.outputSource);
+
+            // TODO set output as extraction image
           })
           .finally(() => {
             this.loading = false;
