@@ -11,7 +11,6 @@ import {
 } from 'paraview-glance/src/utils';
 
 const createState = () => ({
-  inputSource: null,
   tubeSource: null,
   extractionSourceId: -1,
   /* eslint-disable-next-line import/no-named-as-default-member */
@@ -138,7 +137,7 @@ const actions = {
         commit('addTube', centerline.tube);
         return dispatch('rebuildTubePolyData').then((polyData) =>
           dispatch('updateTubeSource', {
-            tubeId: centerline.tube.id,
+            tube: centerline.tube,
             tubeMaskRle: centerline.rle_mask,
             polyData,
           })
@@ -153,7 +152,7 @@ const actions = {
    */
   updateTubeSource: (
     { commit, state, getters, rootState },
-    { tubeId, tubeMaskRle, polyData }
+    { tube, tubeMaskRle, polyData }
   ) => {
     const { proxyManager } = rootState;
 
@@ -222,23 +221,14 @@ const actions = {
     for (let i = 0; i < tubeMaskRle.length; i += 2) {
       const start = tubeMaskRle[i];
       const length = tubeMaskRle[i + 1];
-      rawData.fill(tubeId, start, start + length);
+      rawData.fill(tube.id, start, start + length);
     }
     scalars.modified();
-    labelImage.modified();
 
     labelMap.setColorMap({
       ...labelMap.getColorMap(),
-      [tubeId]: [1, 0, 0, 1],
+      [tube.id]: tube.color.map((c) => c * 255),
     });
-    labelMap.modified();
-
-    // /* eslint-disable-next-line import/no-named-as-default-member */
-    // const tubeGroup = vtkTubeGroup.newInstance({
-    //   labelMap,
-    //   polyData,
-    // });
-    // tubeSource.setInputData(tubeGroup);
 
     proxyManager.createRepresentationInAllViews(tubeSource);
 
@@ -341,9 +331,6 @@ const actions = {
 };
 
 const mutations = {
-  setInputSource: (state, source) => {
-    state.inputSource = source;
-  },
   setExtractionSourceId: (state, sourceId) => {
     state.extractionSourceId = sourceId;
   },
