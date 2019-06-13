@@ -5,6 +5,7 @@ sys.path.insert(2, '/home/forrestli/ITKTubeTK/build2/lib')
 
 import itk
 import random
+import numpy as np
 
 from helper2 import Api, rpc
 
@@ -25,6 +26,35 @@ class SegmentApi(Api):
         self.next_tube_id = 1
         self.tube_id_mapping = {}
         self.tube_image = None
+
+    def get_labelmap(self, tube):
+        if self.input_image is None:
+            raise Exception('No input image?????')
+
+        f = itk.SpatialObjectToImageFilter[itk.SpatialObject[3], itk.Image[itk.UC, 3]].New()
+
+        # same origin and spacing and dir as input_image
+        f.SetOrigin(self.input_image.GetOrigin())
+        f.SetSpacing(self.input_image.GetSpacing())
+        f.SetDirection(self.input_image.GetDirection())
+        f.SetSize(self.input_image.GetLargestPossibleRegion().GetSize())
+
+        f.SetUseObjectValue(False)
+        f.SetOutsideValue(0)
+        f.SetInsideValue(1)
+
+        f.SetInput(tube)
+        f.Update()
+
+        mask = f.GetOutput()
+        voxels = itk.GetArrayFromImage(mask)
+
+        padded = np.concatenate(([0], voxels.flatten(), [0]))
+        run_edges = np.diff(padded)
+        run_starts, = np.where(run_edges > 0)
+        run_stops, = np.where(run_edges < 0)
+        run_lengths = run_stops - run_starts
+        return np.array(list(zip(run_starts, run_lengths)), dtype='uint32').flatten()
 
     @rpc('preprocess')
     def preprocess(self, image, filters):
@@ -80,7 +110,12 @@ class SegmentApi(Api):
             tube.Update()
             self.next_tube_id += 1
 
-            return tube
+            rle_mask = self.get_labelmap(tube)
+
+            return {
+                'tube': tube,
+                'rle_mask': rle_mask,
+            }
 
     @rpc('get_tube_image')
     def get_tube_image(self):
@@ -120,6 +155,7 @@ class SegmentApi(Api):
             tube = self.tube_id_mapping[id_]
             self.segmenter.DeleteTube(tube)
             del self.tube_id_mapping[id_]
+
     @rpc('root_tubes')
     def tubetree(self, roots):
         tubeGroup = self.segmenter.GetTubeGroup()

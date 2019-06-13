@@ -1,8 +1,10 @@
 import vtkAppendPolyData from 'vtk.js/Sources/Filters/General/AppendPolyData';
 import vtkPolyData from 'vtk.js/Sources/Common/DataModel/PolyData';
+import vtkImageData from 'vtk.js/Sources/Common/DataModel/ImageData';
 import vtkDataArray from 'vtk.js/Sources/Common/Core/DataArray';
 
 import vtkTubeGroup from 'paraview-glance/src/vtk/TubeGroup';
+import vtkLabelMap from 'paraview-glance/src/vtk/LabelMap';
 import {
   convertStripsToPolys,
   centerlineToTube,
@@ -169,8 +171,14 @@ const actions = {
 
     return remote.call('segment', coords, scale).then((centerline) => {
       if (centerline) {
-        commit('addTube', centerline);
-        return dispatch('updateTubeSource');
+        commit('addTube', centerline.tube);
+        return dispatch('rebuildTubePolyData').then((polyData) =>
+          dispatch('updateTubeSource', {
+            tubeId: centerline.tube.id,
+            tubeMaskRle: centerline.rle_mask,
+            polyData,
+          })
+        );
       }
       return null;
     });
@@ -179,46 +187,108 @@ const actions = {
   /**
    * Updates tube source by regenerating tube data.
    */
-  updateTubeSource: ({ commit, dispatch, state, rootState }) => {
-    const { proxyManager, remote } = rootState;
+  updateTubeSource: (
+    { commit, state, rootState },
+    { tubeId, tubeMaskRle, polyData }
+  ) => {
+    const { proxyManager } = rootState;
 
-    const p1 = remote.call('get_tube_image');
-    const p2 = dispatch('rebuildTubePolyData');
+    let tubeSource = state.tubeSource;
+    if (!tubeSource) {
+      const activeSource = proxyManager.getActiveSource();
 
-    return Promise.all([p1, p2]).then(([labelmap, tubeGroup]) => {
-      // add empty color to colormap
-      labelmap.setLabelColor(0, [0, 0, 0, 0]);
+      tubeSource = proxyManager.createProxy('Sources', 'TrivialProducer', {
+        name: 'Tubes',
+      });
 
-      // set tube group labelmap
-      tubeGroup.setLabelMap(labelmap);
+      /* eslint-disable-next-line import/no-named-as-default-member */
+      tubeSource.setInputData(vtkTubeGroup.newInstance());
 
-      let tubeSource = state.tubeSource;
-      if (!tubeSource) {
-        const activeSource = proxyManager.getActiveSource();
+      activeSource.activate();
+    }
 
-        tubeSource = proxyManager.createProxy('Sources', 'TrivialProducer', {
-          name: 'Tubes',
-        });
+    const tubeGroup = tubeSource.getDataset();
 
-        activeSource.activate();
-      }
+    // update polydata
+    if (tubeGroup.getPolyData()) {
+      const pd = tubeGroup.getPolyData();
+      // this will update the polydata rendering, unlike using
+      // tubeGroup.setPolyData().
+      pd.shallowCopy(polyData);
+    } else {
+      tubeGroup.setPolyData(polyData);
+    }
 
-      tubeSource.setInputData(tubeGroup);
+    // create labelmap if it doesn't exist
+    if (!tubeGroup.getLabelMap()) {
+      // clone extraction image
+      const extractionImage = state.extractSource.getDataset();
+      const image = vtkImageData.newInstance(
+        extractionImage.get('spacing', 'origin', 'direction')
+      );
+      image.setDimensions(extractionImage.getDimensions());
+      image.computeTransforms();
 
-      proxyManager.createRepresentationInAllViews(tubeSource);
+      // set labelmap as all zeros
+      const values = new Uint16Array(extractionImage.getNumberOfPoints());
+      const dataArray = vtkDataArray.newInstance({
+        numberOfComponents: 1,
+        values,
+      });
+      image.getPointData().setScalars(dataArray);
 
-      // set tube polydata colors
-      proxyManager
-        .getRepresentations()
-        .filter(
-          (r) =>
-            r.getInput() === tubeSource &&
-            r.getClassName() === 'vtkTubeGroupPolyDataRepresentationProxy'
-        )
-        .forEach((rep) => rep.setColorBy('Colors', 'cellData'));
+      // create labelmap
+      /* eslint-disable import/no-named-as-default-member */
+      const labelMap = vtkLabelMap.newInstance({
+        imageRepresentation: image,
+        colorMap: {
+          0: [0, 0, 0, 0], // empty color
+        },
+      });
 
-      commit('setTubeSource', tubeSource);
+      tubeGroup.setLabelMap(labelMap);
+    }
+
+    // update labelmap
+    const labelMap = tubeGroup.getLabelMap();
+    const labelImage = labelMap.getImageRepresentation();
+    const scalars = labelImage.getPointData().getArrays()[0];
+    const rawData = scalars.getData();
+
+    for (let i = 0; i < tubeMaskRle.length; i += 2) {
+      const start = tubeMaskRle[i];
+      const length = tubeMaskRle[i + 1];
+      rawData.fill(tubeId, start, start + length);
+    }
+    scalars.modified();
+    labelImage.modified();
+
+    labelMap.setColorMap({
+      ...labelMap.getColorMap(),
+      [tubeId]: [1, 0, 0, 1],
     });
+    labelMap.modified();
+
+    // /* eslint-disable-next-line import/no-named-as-default-member */
+    // const tubeGroup = vtkTubeGroup.newInstance({
+    //   labelMap,
+    //   polyData,
+    // });
+    // tubeSource.setInputData(tubeGroup);
+
+    proxyManager.createRepresentationInAllViews(tubeSource);
+
+    // set tube polydata colors
+    proxyManager
+      .getRepresentations()
+      .filter(
+        (r) =>
+          r.getInput() === tubeSource &&
+          r.getClassName() === 'vtkTubeGroupPolyDataRepresentationProxy'
+      )
+      .forEach((rep) => rep.setColorBy('Colors', 'cellData'));
+
+    commit('setTubeSource', tubeSource);
   },
 
   /**
@@ -269,8 +339,7 @@ const actions = {
     //   this.cellToTubeId[i] = [cumulativeCellCount, id];
     // }
 
-    /* eslint-disable-next-line import/no-named-as-default-member */
-    return vtkTubeGroup.newInstance({ polyData });
+    return polyData;
   },
 
   /**

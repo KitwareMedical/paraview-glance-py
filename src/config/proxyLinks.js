@@ -24,10 +24,7 @@ const Geometry = [
   { link: 'PointSize', property: 'pointSize', updateOnBind: true },
 ];
 
-const TubeGroup = [
-  { link: 'Opacity', property: 'opacity', updateOnBind: true },
-  { link: 'Visibility', property: 'visibility', updateOnBind: true },
-];
+const TubeGroup = [];
 
 const Slice = [
   { link: 'Visibility', property: 'visibility', updateOnBind: true },
