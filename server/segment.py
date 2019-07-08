@@ -6,6 +6,8 @@ sys.path.insert(2, '/home/forrestli/ITKTubeTK/build2/lib')
 import itk
 import random
 import numpy as np
+from itk import TubeTK
+import math
 
 from helper2 import Api, rpc
 
@@ -94,13 +96,101 @@ class SegmentApi(Api):
             self.input_image = image
             self.segmenter = itk.TubeTK.SegmentTubes[type(image)].New()
             self.segmenter.SetInputImage(image)
+            
 
     @rpc('segment')
     def segment(self, position, scale):
+        count = 0
         if self.segmenter is None:
             raise Exception('segment image is not set')
+        text = open("coords.txt", "a+")
+        
+        # New Stuff
+        LowerThreshold = 10
+        UpperThreshold = 300
+        PixelType = itk.F
+        ImageType = itk.Image[PixelType,3]
+        ImageType2 = itk.Image[PixelType,2]
 
-        tube = self.segmenter.ExtractTube(position, self.next_tube_id, True)
+        OldImageType = type(self.input_image)
+        ImageType = itk.Image[itk.F, 3]
+        img = itk.CastImageFilter[OldImageType, ImageType].New()(self.input_image)
+        imgRegion = img.GetLargestPossibleRegion()
+        indx = imgRegion.GetIndex()
+        indx[2] = position[2]
+        size = imgRegion.GetSize()
+        size[2] = 0
+        imgRegionCut = imgRegion
+        imgRegionCut.SetIndex(indx)
+        imgRegionCut.SetSize(size)
+        extractFilter = itk.ExtractImageFilter[ImageType, ImageType2].New()
+        extractFilter.SetInput(img)
+        extractFilter.SetDirectionCollapseToSubmatrix()
+        extractFilter.SetExtractionRegion(imgRegionCut)
+        extractFilter.Update()
+        img2 = extractFilter.GetOutput()
+        connected = itk.ConnectedThresholdImageFilter.New(img2)
+        connected.SetLower(LowerThreshold)
+        connected.SetUpper(UpperThreshold)
+        connected.SetReplaceValue(2)
+
+        coord2 = itk.Index[2]()
+        coord2[0] = position[0]
+        coord2[1] = position[1]
+        connected.AddSeed(coord2)
+        connected.Update()
+        mask = connected.GetOutput()
+
+        invert = itk.InvertIntensityImageFilter.New(mask)
+        invert.SetMaximum(2)
+        invert.Update()
+        maskI = invert.GetOutput()
+        
+        # Expected Radius
+        statsFilter = itk.StatisticsImageFilter.New(mask)
+        statsFilter.Update()
+        num_voxels = statsFilter.GetSum() / 2
+        print('Number of voxels: ' + str(num_voxels)) 
+        
+        area = num_voxels * img.GetSpacing()[0] * img.GetSpacing()[1]
+        areaRadius = math.sqrt(area / math.pi)
+        print('Area Radius: ' + str(areaRadius))
+        
+        distance = itk.DanielssonDistanceMapImageFilter.New(maskI)
+        distance.InputIsBinaryOn()
+        distance.Update()
+        dist = distance.GetOutput()
+        minmax = itk.MinimumMaximumImageCalculator.New(dist)
+        minmax.Compute()
+        
+        radius = minmax.GetMaximum()
+        radius = radius * img.GetSpacing()[0]
+        print('Maximally Inscribed Radius: ' + str(radius))
+        radiusIndex = minmax.GetIndexOfMaximum()
+        index3 = itk.Index[3]()
+        index3[0] = radiusIndex[0]
+        index3[1] = radiusIndex[1]
+        index3[2] = position[2]
+        radiusPoint = img.TransformIndexToPhysicalPoint(index3)
+        tube = itk.TubeSpatialObject[3].New()
+        tube.SetId(self.next_tube_id)
+        tubePoint = itk.TubeSpatialObjectPoint[3]()
+        tubePoint.SetRadiusInObjectSpace(radius)
+        radiusPoint[2] = radiusPoint[2]+0.5
+        tubePoint.SetPositionInObjectSpace(radiusPoint)
+        tube.AddPoint(tubePoint)
+        radiusPoint[2] = radiusPoint[2]-0.5
+        tubePoint.SetPositionInObjectSpace(radiusPoint)
+        tube.AddPoint(tubePoint)
+        radiusPoint[2] = radiusPoint[2]-0.5
+        tubePoint.SetPositionInObjectSpace(radiusPoint)
+        tube.AddPoint(tubePoint)
+        
+        diameter = 2 * radius
+        text.write(str(position[0]) + ', ' + str(position[1]) + ', ' + str(position[2]) + ', ' + str(diameter) + '\n')
+
+        # Old Stuff
+        #tube = self.segmenter.ExtractTube(position, self.next_tube_id, True)
         if tube is not None:
             self.segmenter.AddTube(tube)
             self.tube_id_mapping[tube.GetId()] = tube
@@ -173,4 +263,4 @@ class SegmentApi(Api):
             child = itk.down_cast(children[idx])
             new_parent_ids.append((child.GetId(), child.GetParentId()))
 
-        return new_parent_ids
+        return new_parent_idstk
