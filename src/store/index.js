@@ -11,7 +11,7 @@ import global from 'paraview-glance/src/store/globalSettings';
 import files from 'paraview-glance/src/store/fileLoader';
 import screenshots from 'paraview-glance/src/store/screenshots';
 import views from 'paraview-glance/src/store/views';
-import vessels from 'paraview-glance/src/store/vessels';
+import processData from 'paraview-glance/src/store/processData';
 import { Actions, Mutations } from 'paraview-glance/src/store/types';
 import Remote from 'paraview-glance/src/remote';
 
@@ -54,7 +54,7 @@ function getModuleDefinitions() {
     files,
     screenshots,
     views,
-    vessels,
+    processData,
   };
 }
 

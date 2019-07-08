@@ -1,0 +1,76 @@
+<v-container :class="[$style.container, 'grid-list-lg']">
+  <v-layout row wrap>
+    <v-flex xs12>
+      <v-select
+        label="Input Image"
+        no-data-text="No images available"
+        :items="getAvailableDatasets('vtkImageData')"
+        item-text="name"
+        item-value="sourceId"
+        :value="inputImage"
+        @input="setInputImage"
+        hide-details
+      />
+    </v-flex>
+    <v-flex xs12>
+      <v-select
+        label="Input Labelmap"
+        no-data-text="No labelmaps available"
+        :items="getAvailableDatasets('vtkLabelMap')"
+        item-text="name"
+        item-value="sourceId"
+        :value="inputLabelmap"
+        @input="setInputLabelmap"
+        hide-details
+      />
+    </v-flex>
+  </v-layout>
+  <v-layout
+    v-for="param in parameters"
+    :key="param.name"
+    row
+    wrap
+    align-center
+  >
+    <template v-if="param.type === 'range'">
+      <v-flex xs3>
+        {{ param.label || param.name }}
+      </v-flex>
+      <v-flex xs6>
+        <v-slider
+          :min="param.range[0]"
+          :max="param.range[1]"
+          :step="param.step"
+          :value="args[param.name]"
+          @input="setArgument(param.name, $event)"
+          hide-details
+        />
+      </v-flex>
+      <v-flex xs3>
+        <v-text-field
+          :value="args[param.name]"
+          @input="setArgument(param.name, $event)"
+          hide-details
+        />
+      </v-flex>
+    </template>
+    <template v-else-if="param.type === 'bool'">
+      <v-flex xs3>
+        {{ param.label || param.name }}
+      </v-flex>
+      <v-flex xs9>
+        <v-checkbox
+          :input-value="args[param.name]"
+          @change="setArgument(param.name, $event)"
+        />
+      </v-flex>
+    </template>
+  </v-layout>
+  <v-layout row>
+    <v-flex xs12>
+      <v-btn @click="processData" :disabled="!canRun">
+        Run
+      </v-btn>
+    </v-flex>
+  </v-layout>
+</v-container>
