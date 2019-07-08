@@ -1,0 +1,15 @@
+.container {
+  padding: 8px;
+}
+
+.container * {
+  user-select: none;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.smallLabel {
+  font-size: 12px;
+}
