@@ -33,8 +33,6 @@ This has only been tested with python3.
 ```
 $ git clone git@github.com:KitwareMedical/glance-vessels.git
 $ cd glance-vessels/
-$ git submodule init
-$ git submodule update
 $ npm install
 $ npm run build:release
 $ cd server/
