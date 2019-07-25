@@ -3,3 +3,4 @@ dist
 server/www
 Pipfile
 build/glance-vessels/
+__pycache__
