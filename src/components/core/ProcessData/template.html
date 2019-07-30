@@ -66,11 +66,27 @@
       </v-flex>
     </template>
   </v-layout>
-  <v-layout row>
-    <v-flex xs12>
-      <v-btn @click="processData" :disabled="!canRun">
+  <v-layout row align-center>
+    <v-flex xs3>
+      <v-btn
+        @click="processData"
+        :disabled="!canRun || loading"
+        :loading="loading"
+      >
         Run
       </v-btn>
     </v-flex>
+    <template v-if="error">
+      <v-flex xs1>
+        <v-icon color="red">error</v-icon>
+      </v-flex>
+      <v-flex xs8>
+        Error:
+        <v-tooltip bottom>
+          <code slot="activator">{{ error.data.exception }}</code>
+          <code>{{ error.data.trace }}</code>
+        </v-tooltip>
+      </v-flex>
+    </template>
   </v-layout>
 </v-container>

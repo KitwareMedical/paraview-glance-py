@@ -8,6 +8,12 @@ import ProxyManagerMixin from 'paraview-glance/src/mixins/ProxyManagerMixin';
 export default {
   name: 'ProcessData',
   mixins: [ProxyManagerMixin],
+  data() {
+    return {
+      loading: false,
+      error: null,
+    };
+  },
   computed: {
     ...mapState(['proxyManager']),
     ...mapState('processData', {
@@ -46,7 +52,7 @@ export default {
   },
   methods: {
     ...mapActions('processData', {
-      processData: 'run',
+      run: 'run',
       setInputImage: 'setInputImage',
       setInputLabelmap: 'setInputLabelmap',
     }),
@@ -61,6 +67,18 @@ export default {
     },
     setArgument(name, value) {
       this.$store.dispatch('processData/setArgument', { name, value });
+    },
+    processData() {
+      this.loading = true;
+      this.error = null;
+
+      this.run()
+        .catch((error) => {
+          this.error = error;
+        })
+        .finally(() => {
+          this.loading = false;
+        });
     },
   },
 };
