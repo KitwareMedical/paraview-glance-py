@@ -61,8 +61,7 @@ class AlgorithmApi(Api):
 
         ids = np.unique(arr_labelmap)
         if ids.size < 3:
-            print("ERROR: Please paint at least two colors.")
-            return
+            raise Exception("ERROR: Please paint at least two colors.")
 
         print("Segmenting...")
         objectId = ids[1]
