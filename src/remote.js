@@ -1,4 +1,4 @@
-import WebsocketConnection from 'paraview-glance/wslink/js/src/WebsocketConnection';
+import WebsocketConnection from 'wslink/src/WebsocketConnection';
 
 import * as serializable from 'paraview-glance/src/serializable';
 // register transformers

@@ -1,4 +1,0 @@
-[submodule "wslink"]
-	path = wslink
-	url = https://github.com/Kitware/wslink.git
-	branch = master

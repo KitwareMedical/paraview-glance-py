@@ -49,7 +49,8 @@
     "vuetify": "1.5.14",
     "vuex": "^3.0.1",
     "webworker-promise": "0.4.1",
-    "workbox-sw": "2.1.2"
+    "workbox-sw": "2.1.2",
+    "wslink": "^0.1.11"
   },
   "devDependencies": {
     "@babel/plugin-syntax-dynamic-import": "7.0.0",
