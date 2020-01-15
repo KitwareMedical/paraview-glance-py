@@ -38,7 +38,7 @@ if __name__ == '__main__':
 
     static_dir = os.path.join(basepath, 'www')
     host = 'localhost'
-    port = get_port()
+    port = 9998 #get_port()
     args = [
         '--content', static_dir,
         '--host', host,
@@ -55,7 +55,7 @@ if __name__ == '__main__':
         webbrowser.open(full_url)
 
     #threading.Timer(1, target=open_webapp).start()
-    reactor.callLater(0.1, open_webapp)
+    #reactor.callLater(0.1, open_webapp)
 
     server.start(args, AlgorithmServer)
     server.stop_webserver()

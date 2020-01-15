@@ -19,20 +19,24 @@ export default {
     ...mapState('processData', {
       parameters: 'parameters',
       args: 'args',
-      inputImage: (processData) => {
-        if (processData.inputImage) {
+      inputImage(state) {
+        const { inputImageId } = state;
+        if (inputImageId !== null) {
+          const inputImage = this.proxyManager.getProxyById(inputImageId);
           return {
-            name: processData.inputImage.getName(),
-            sourceId: processData.inputImage.getProxyId(),
+            name: inputImage.getName(),
+            sourceId: inputImageId,
           };
         }
         return null;
       },
-      inputLabelmap: (processData) => {
-        if (processData.inputLabelmap) {
+      inputLabelmap(state) {
+        const { inputLabelmapId } = state;
+        if (inputLabelmapId !== null) {
+          const inputLabelmap = this.proxyManager.getProxyById(inputLabelmapId);
           return {
-            name: processData.inputLabelmap.getName(),
-            sourceId: processData.inputLabelmap.getProxyId(),
+            name: inputLabelmap.getName(),
+            sourceId: inputLabelmapId,
           };
         }
         return null;
@@ -53,8 +57,8 @@ export default {
   methods: {
     ...mapActions('processData', {
       run: 'run',
-      setInputImage: 'setInputImage',
-      setInputLabelmap: 'setInputLabelmap',
+      setInputImageId: 'setInputImageId',
+      setInputLabelmapId: 'setInputLabelmapId',
     }),
     getAvailableDatasets(type) {
       return this.proxyManager

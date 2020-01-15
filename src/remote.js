@@ -28,7 +28,7 @@ const TypeConversions = generateConversionLookup([
 ]);
 
 function blobToTypedArray(key, value) {
-  if (value && value.$type === 'ArrayBuffer') {
+  if (value && value.classtype === 'ArrayBuffer') {
     const { dataType, buffer: blob } = value;
     const type = TypeConversions[dataType].js;
 

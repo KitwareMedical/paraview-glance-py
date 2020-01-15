@@ -48,8 +48,12 @@ export default {
     },
   },
   proxyManager: {
-    onProxyRegistrationChange({ proxyGroup, proxyId }) {
+    onProxyRegistrationChange({ action, proxyGroup, proxyId }) {
       if (proxyGroup === 'Sources') {
+        if (action === 'unregister' && this.inputSourceId === proxyId) {
+          console.log(this.inputSource.getDataset());
+          this.remote.delete(this.inputSource.getDataset());
+        }
         // update image selection
         this.$forceUpdate();
       }
@@ -71,6 +75,9 @@ export default {
           sourceId: s.getProxyId(),
         }));
     },
+    // @forrest This can be an action. No point in adding all of this logic here.
+    // I envisioned runFilters() being an action, with the corresponding store
+    // file containing the proxyManager hook for deleting the remote dataset.
     runFilters() {
       const dataset = this.inputSource.getDataset();
 

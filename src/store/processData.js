@@ -3,16 +3,26 @@ import Vue from 'vue';
 import { wrapMutationAsAction } from 'paraview-glance/src/utils';
 
 const createState = () => ({
-  inputImage: null,
-  inputLabelmap: null,
+  inputImageId: null,
+  inputLabelmapId: null,
   outputs: {},
   parameters: [],
   args: {},
 });
 
-// export const proxyManagerHooks = {
-//   onProxyRegistrationChange: (store) => (info) => {},
-// };
+export const proxyManagerHooks = {
+  onProxyRegistrationChange: (store) => (info) => {
+    const { processData: state } = store;
+    const { action, proxyId } = info;
+    if (action === 'unregister') {
+      Object.keys(state.outputs).forEach((key) => {
+        if (proxyId === state.outputs[key]) {
+          debugger;
+        }
+      });
+    }
+  },
+};
 
 // export function serialize(state) {
 //   const idCombinator = (src) => (src ? src.getProxyId() : null);
@@ -24,23 +34,24 @@ const createState = () => ({
 // }
 
 const actions = {
-  setInputImage: ({ commit, rootState }, sourceId) =>
-    commit('setInputImage', rootState.proxyManager.getProxyById(sourceId)),
+  setInputImageId: wrapMutationAsAction('setInputImageId'),
 
-  setInputLabelmap: ({ commit, rootState }, sourceId) =>
-    commit('setInputLabelmap', rootState.proxyManager.getProxyById(sourceId)),
+  setInputLabelmapId: wrapMutationAsAction('setInputLabelmapId'),
 
   setOutput: ({ commit, state, rootState }, { dataset, name }) => {
     const { proxyManager } = rootState;
 
-    let source = state.outputs[name];
-    if (!source) {
+    const sourceId = state.outputs[name];
+    let source;
+    if (sourceId === undefined) {
       source = proxyManager.createProxy('Sources', 'TrivialProducer', {
         name,
       });
-      source.setInputData(dataset);
+    } else {
+      source = proxyManager.getProxyById(sourceId);
     }
 
+    source.setInputData(dataset);
     proxyManager.createRepresentationInAllViews(source);
     commit('setOutput', { name, source });
   },
@@ -48,10 +59,14 @@ const actions = {
   setArgument: wrapMutationAsAction('setArgument'),
 
   run: ({ dispatch, state, rootState }) => {
-    const { remote } = rootState;
+    const { proxyManager, remote } = rootState;
 
-    const inputImage = state.inputImage.getDataset();
-    const inputLabelmap = state.inputLabelmap.getDataset();
+    const inputImage = proxyManager
+      .getProxyById(state.inputImageId)
+      .getDataset();
+    const inputLabelmap = proxyManager
+      .getProxyById(state.inputLabelmapId)
+      .getDataset();
 
     remote.persist(inputImage);
     remote.persist(inputLabelmap);
@@ -83,17 +98,17 @@ const actions = {
 };
 
 const mutations = {
-  setInputImage: (state, source) => {
-    state.inputImage = source;
+  setInputImageId: (state, sourceId) => {
+    state.inputImageId = sourceId;
   },
-  setInputLabelmap: (state, source) => {
-    state.inputLabelmap = source;
+  setInputLabelmapId: (state, sourceId) => {
+    state.inputLabelmapId = sourceId;
   },
   setOutput: (state, { name, source }) => {
     if (!(name in state.outputs)) {
       Vue.set(state.outputs, name, null);
     }
-    state.outputs[name] = source;
+    state.outputs[name] = source.getProxyId();
   },
   setParameters: (state, params) => {
     state.parameters = params;
@@ -118,5 +133,5 @@ export default {
   // custom properties
   // serialize,
   // unserialize,
-  // proxyManagerHooks,
+  proxyManagerHooks,
 };
