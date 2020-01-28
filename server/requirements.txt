@@ -1,0 +1,2 @@
+itk==5.0b3
+git+git://github.com/Kitware/wslink@master#egg=wslink&subdirectory=python
