@@ -2,6 +2,7 @@ import sys
 import os
 import webbrowser
 import socket
+import argparse
 
 from wslink.websocket import ServerProtocol
 from wslink import server
@@ -36,10 +37,20 @@ if __name__ == '__main__':
     except:
         basepath = os.path.dirname(os.path.dirname(sys.argv[0]))
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-H', '--host', default='localhost',
+                        help='Hostname for server to listen on')
+    parser.add_argument('-P', '--port', default=get_port(),
+                        help='Port for server to listen on')
+    parser.add_argument('-b', '--no-browser', action='store_true',
+                        help='Do not auto-open the browser')
+    args = parser.parse_args()
+    print(args)
+
     static_dir = os.path.join(basepath, 'www')
-    host = 'localhost'
-    port = get_port()
-    args = [
+    host = args.host
+    port = args.port
+    server_args = [
         '--content', static_dir,
         '--host', host,
         '--port', str(port)
@@ -54,8 +65,8 @@ if __name__ == '__main__':
     def open_webapp():
         webbrowser.open(full_url)
 
-    threading.Timer(1, target=open_webapp).start()
-    reactor.callLater(0.1, open_webapp)
+    if not args.no_browser:
+        reactor.callLater(0.1, open_webapp)
 
-    server.start(args, AlgorithmServer)
+    server.start(server_args, AlgorithmServer)
     server.stop_webserver()
