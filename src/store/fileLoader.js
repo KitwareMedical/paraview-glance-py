@@ -78,7 +78,7 @@ function readRawFile(file, { dimensions, spacing, dataType }) {
 
 // ----------------------------------------------------------------------------
 
-export default (proxyManager) => ({
+export default ({ proxyManager }) => ({
   namespaced: true,
   state: {
     remoteFileList: [],

@@ -20,6 +20,7 @@ import ReaderFactory from 'paraview-glance/src/io/ReaderFactory';
 import App from 'paraview-glance/src/components/core/App';
 import Config from 'paraview-glance/src/config';
 import createStore from 'paraview-glance/src/store';
+import Remote from 'paraview-glance/src/remote/remote';
 import { ProxyManagerVuePlugin } from 'paraview-glance/src/plugins';
 
 // Expose IO API to Glance global object
@@ -54,7 +55,9 @@ export function createViewer(container, proxyConfig = null) {
   const proxyConfiguration = proxyConfig || activeProxyConfig || Config.Proxy;
   const proxyManager = vtkProxyManager.newInstance({ proxyConfiguration });
 
-  const store = createStore(proxyManager);
+  const remote = new Remote();
+
+  const store = createStore({ proxyManager, remote });
 
   const app = new Vue({
     el: container,
@@ -91,7 +94,12 @@ export function createViewer(container, proxyConfig = null) {
 
   return {
     processURLArgs() {
-      const { name, url } = vtkURLExtract.extractURLParameters();
+      const { name, url, wsServer } = vtkURLExtract.extractURLParameters();
+
+      if (wsServer && typeof wsServer === 'string') {
+        store.dispatch('remote/connect', wsServer);
+      }
+
       if (name && url) {
         const names = typeof name === 'string' ? [name] : name;
         const urls = typeof url === 'string' ? [url] : url;

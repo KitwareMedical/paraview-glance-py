@@ -3,16 +3,15 @@ import Vue from 'vue';
 import Vuex from 'vuex';
 
 import vtk from 'vtk.js/Sources/vtk';
-import vtkProxyManager from 'vtk.js/Sources/Proxy/Core/ProxyManager';
 
 import { ProxyManagerVuexPlugin } from 'paraview-glance/src/plugins';
 
 import viewHelper from 'paraview-glance/src/components/core/VtkView/helper';
 import ReaderFactory from 'paraview-glance/src/io/ReaderFactory';
-import Config from 'paraview-glance/src/config';
 import files from 'paraview-glance/src/store/fileLoader';
 import views from 'paraview-glance/src/store/views';
 import widgets from 'paraview-glance/src/store/widgets';
+import remote from 'paraview-glance/src/store/remote';
 
 import { wrapMutationAsAction } from 'paraview-glance/src/utils';
 
@@ -55,13 +54,8 @@ function changeActiveSliceDelta(proxyManager, delta) {
   }
 }
 
-function createStore(pxm = null) {
-  let proxyManager = pxm;
-  if (!proxyManager) {
-    proxyManager = vtkProxyManager.newInstance({
-      proxyConfiguration: Config.Proxy,
-    });
-  }
+function createStore(services) {
+  const { proxyManager } = services;
 
   const $store = new Vuex.Store({
     plugins: [ProxyManagerVuexPlugin(proxyManager)],
@@ -88,9 +82,10 @@ function createStore(pxm = null) {
       },
     },
     modules: {
-      files: files(proxyManager),
-      views: views(proxyManager),
-      widgets: widgets(proxyManager),
+      files: files(services),
+      views: views(services),
+      widgets: widgets(services),
+      remote: remote(services),
     },
     mutations: {
       showLanding(state) {
