@@ -14,6 +14,16 @@ class AlgorithmApi(Api):
     def params(self):
         return [
             {
+                'name': 'input_image',
+                'label': 'Input image',
+                'type': 'source',
+            },
+            {
+                'name': 'input_labelmap',
+                'label': 'Input labelmap',
+                'type': 'source',
+            },
+            {
                 'name': 'median_filter_radius',
                 'label': 'Median filter radius',
                 'type': 'range',
@@ -38,12 +48,15 @@ class AlgorithmApi(Api):
         ]
 
     @rpc('run')
-    def run(self, input_image, input_labelmap, params=None):
-        params = params or dict()
+    def run(self, params):
+        input_image = params['input_image']
+        labelmap = params['input_labelmap']
+
+        if not input_image or not labelmap:
+            raise Exception('No input image or labelmap!')
 
         ImageType = type(input_image)
 
-        labelmap = input_labelmap['imageRepresentation']
         LabelMapType = type(labelmap)
 
         print("Filtering...")
@@ -125,8 +138,7 @@ class AlgorithmApi(Api):
         print("Hole filling...")
         holeFill.Update()
 
-        out_labelmap = dict(input_labelmap)
-        out_labelmap['imageRepresentation'] = holeFill.GetOutput()
+        out_labelmap = holeFill.GetOutput()
 
         if params['invert']:
             invert = itk.InverIntensityImageFilter[LabelMapType].New(holeFill.GetOutput())
@@ -134,14 +146,21 @@ class AlgorithmApi(Api):
             print("Inverting...")
             invert.Update()
             out_labelmapimage = invert.GetOuput()
-            out_labelmap['imageRepresentation'] = invert.GetOutput()
+            out_labelmap = invert.GetOutput()
 
         print("Done!")
 
 
         return {
-            'image': out_image,
-            'imageName': 'Output image',
-            'labelmap': out_labelmap,
-            'labelmapName': 'Output labelmap',
+            'datasets': [
+                {
+                    'name': 'Output image',
+                    'dataset': out_image,
+                },
+                {
+                    'name': 'Output labelmap',
+                    'dataset': out_labelmap,
+                    'type': 'LabelMap',
+                },
+            ],
         }
