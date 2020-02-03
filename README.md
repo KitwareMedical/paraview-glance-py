@@ -1,102 +1,108 @@
-![ParaView Glance](documentation/content/ParaViewGlance_Logo.png)
+paraview-glance-py
+==============
 
-Introduction
-============
-[ParaView Glance][] is an open-source, javascript visualization application created by [Kitware][], based on [Visualization Toolkit (VTK)][VTK], and intended to serve as a light-weight companion to [Paraview][].  It is part of
-the [ParaView Web][] suite of tools.
+[![Build Status](https://dev.azure.com/glance-vessels/glance-vessels/_apis/build/status/KitwareMedical.glance-vessels?branchName=master)](https://dev.azure.com/glance-vessels/glance-vessels/_build/latest?definitionId=1&branchName=master)
 
-[ParaView Glance]: https://kitware.github.io/paraview-glance/
-[ParaView Web]: http://www.paraview.org/web
-[ParaView]: http://www.paraview.org
-[VTK]: http://www.vtk.org
-[Kitware]: http://www.kitware.com
+This is built off of ParaView Glance.
 
-Learning Resources
-==================
+Installation
+------------
 
-* General information is available at the [ParaView][] and [ParaView Web][] homepages.
+Download the stand-alone executable:
 
-* Community discussion takes place on the [ParaView Discourse][].
+| Operating System | Executable |
+| ------------- |:-------------:|
+| Linux | [glance-vessels.linux.x86_64](https://github.com/KitwareMedical/glance-vessels/releases/download/latest/glance-vessels.linux.x86_64) |
+| macOS | [glance-vessels.macos.x86_64](https://github.com/KitwareMedical/glance-vessels/releases/download/latest/glance-vessels.macos.x86_64) |
+| Windows | [glance-vessels.windows.x86_64.exe](https://github.com/KitwareMedical/glance-vessels/releases/download/latest/glance-vessels.windows.x86_64.exe) |
 
-* Commercial [support][Kitware Support] and [training][Kitware Training] are available from [Kitware][].
+Usage
+-----
 
-* Additional documentation is being created and will be released as it is created on our [documentation pages][ParaView Glance GitHub.io].
-
-[ParaView Discourse]: https://discourse.paraview.org/
-[Kitware Support]: http://www.kitware.com/products/support.html
-[Kitware Training]: http://www.kitware.com/products/protraining.php
-[ParaView Glance GitHub.io]: https://kitware.github.io/paraview-glance/
+Run the executable. A new tab will open in your web browser with the
+application user interface.
 
 
-Live Demonstrations
-===================
+Development
+-----------
 
-As a javascript application, ParaView Glance can be run by pointing any browser at an appropriate URL or loading an HTML file.
+### Build
 
-Because of ParaView Glance's ease of distribution, the stable and nightly releases of the code on [github][] can be run by visiting the appropriate web page:
-
-Visit these URLs to run the [stable][] and [nightly][] release of ParaView Glance.
-
-[github]: https://github.com/kitware/paraview-glance
-[stable]: https://kitware.github.io/paraview-glance/app
-[nightly]: https://kitware.github.io/paraview-glance/nightly
-
-
-Building
-========
-
-The prerequisites are [git][] and [node.js + npm][].
-
-If you wish to view, enhance, or adapt this application in any way, you can access and run the freely available source code from any platform using the following commands:
-
+This has only been tested with python3.
 
 ```
-$ git clone https://github.com/Kitware/paraview-glance.git
-$ cd paraview-glance/
+$ git clone git@github.com:KitwareMedical/paraview-glance-py.git
+$ cd paraview-glance-py/
 $ npm install
-$ npm run build
+$ npm run build:release
+$ cd server/
+$ pip install -r requirements.txt
+```
+
+To build a standalone executable:
+
+```
+$ pip install pyinstaller
+```
+
+On Windows, also install *pywin32*:
+
+```
+$ pip install pywin32
+```
+
+Then package as a directory:
+
+```
+$ pyinstaller build/paraview-glance-py.spec
+
+```
+
+Or as a single file:
+
+```
+$ pyinstaller build/paraview-glance-py-onefile.spec
+```
+
+### Run
+
+Simply run the resultant executable
+`dist/paraview-glance-py/paraview-glance-py`.
+
+### Run web and server separately
+
+For dev purposes, it is better to run the web and server as separate
+instances for debugging.
+
+In one terminal, build the development version of the webapp:
+```
+$ cd paraview-glance-py/
 $ npm run dev
 ```
 
-This will run a development build and you can visit the application at `http://localhost:9999`.
-
-To generate a production build, use the following commands:
-
+In another terminal, run the server.
 ```
-$ npm run build:release
+$ cd paraview-glance-py/server
+$ python server.py --port 8888 --no-browser
 ```
 
-This will output the final bundle and assets to `dist/`.
-
-If you make changes to any of the ITK filtering code under `itk/`, you should run the following
-command from the root folder. For more information, check out [itk.js].
-
-```
-$ npx itk-js build itk/
-```
-
-[git]: https://git-scm.com
-[node.js + npm]: https://nodejs.org/en
-[itk.js]: https://insightsoftwareconsortium.github.io/itk-js/examples/hello_world_node.html
+After the python server starts up, visit
+`http://localhost:9999/?wsServer=http://localhost:8888/ws` to view the webapp.
+If you get a blank screen, try clearing cache and then refreshing.
 
 
-Reporting Bugs and Making Contributions
-=======================================
+Troubleshooting
+---------------
 
-If you have found a bug or have a suggestion for improving ParaView Glance:
+### Library issues when running (linux)
 
-1. If you have source code to contribute, please fork the github repository into your own github account, create a branch with your changes, and then create a merge request with the main repo.
+For the prebuilt binaries, this is likely due to the automated build
+environment using a different version of certain libraries. The easiest
+workaround is to follow the instructions under "Development" above and build
+the application locally so pyinstaller can link against local libraries.
 
-2. If you have a bug to report or a feature to request, please open an entry in the [ParaView Glance Issue Tracker][].
+### The application is still running after closing the tab
 
-[ParaView Glance Issue Tracker]: https://github.com/kitware/paraview-glance/issues
-
-
-License
-=======
-
-ParaView Glance is distributed under the OSI-approved BSD 3-clause License.  See [COPYRIGHT][] and [LICENSE][] for details. For additional licenses, refer to [ParaView Licenses][].
-
-[COPYRIGHT]: COPYRIGHT
-[LICENSE]: LICENSE
-[ParaView Licenses]: http://www.paraview.org/paraview-license/
+Right now the server is set to self-terminate after 5 minutes. Either kill the
+application manually or wait 5 minutes for the application to self-terminate.
+Multiple instances of the application will not interfere with one another.
