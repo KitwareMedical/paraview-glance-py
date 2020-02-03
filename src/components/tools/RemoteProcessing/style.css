@@ -8,7 +8,10 @@
 
 .serverOutput {
   width: 100%;
-  white-space: nowrap;
+  white-space: pre;
   border-radius: 3px;
   border: 1px solid grey;
+  min-height: 250px;
+  font-size: 14px;
+  font-family: monospace;
 }

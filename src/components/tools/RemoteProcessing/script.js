@@ -16,6 +16,7 @@ export default {
   },
   computed: {
     ...mapState('remote', {
+      connected: 'connected',
       processing: 'processing',
       serverStdout: 'serverStdout',
       parameters: (state) => state.paramOrder.map((name) => state.params[name]),
