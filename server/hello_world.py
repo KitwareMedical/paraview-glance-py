@@ -4,7 +4,7 @@ import random
 
 import numpy as np
 
-from helper import Api, rpc
+from helper import Api, rpc, forward_stdout
 
 class AlgorithmApi(Api):
     def __init__(self):
@@ -48,6 +48,7 @@ class AlgorithmApi(Api):
         ]
 
     @rpc('run')
+    @forward_stdout
     def run(self, params):
         input_image = params['input_image']
         labelmap = params['input_labelmap']

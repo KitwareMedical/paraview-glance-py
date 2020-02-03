@@ -1,3 +1,4 @@
+import sys
 import weakref
 import uuid
 
@@ -7,6 +8,42 @@ from wslink.websocket import LinkProtocol
 
 from serializable import serialize, unserialize
 import transformers # register our serializers/unserializers
+
+class WsOut(object):
+    def __init__(self, protocol):
+        self.protocol = protocol
+
+    def write(self, b):
+        self.protocol.publish('streams.stdout', b)
+
+    def flush(self):
+        pass
+
+class NetworkTee(object):
+    def __init__(self, netout):
+        self.netout = netout
+        self.stdout = sys.stdout
+
+    def write(self, b):
+        self.netout.write(b)
+        self.stdout.write(b)
+
+    def flush(self):
+        self.netout.flush()
+        self.stdout.flush()
+
+
+def forward_stdout(fn):
+    def handler(self, *args, **kwargs):
+        wsout = WsOut(self)
+        tee = NetworkTee(wsout)
+        sys.stdout = tee
+
+        ret = fn(self, *args, **kwargs)
+
+        sys.stdout = tee.stdout
+        return ret
+    return handler
 
 def rpc(name):
     def wrapper(fn):
