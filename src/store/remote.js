@@ -15,6 +15,7 @@ export default ({ proxyManager, remote }) => ({
     processing: false,
     params: {},
     paramOrder: [],
+    serverStdout: '',
   }),
 
   mutations: {
@@ -39,13 +40,24 @@ export default ({ proxyManager, remote }) => ({
     processing(state, flag) {
       state.processing = flag;
     },
+    appendStdout(state, text) {
+      state.serverStdout += text;
+    },
+    clearStdout(state) {
+      state.serverStdout = '';
+    },
   },
 
   actions: {
     connect({ commit }, endpoint) {
       return remote
         .connect(endpoint)
-        .then(() => commit('connected'))
+        .then(() => {
+          commit('connected');
+          remote.session.subscribe('streams.stdout', (stdout) =>
+            commit('appendStdout', stdout)
+          );
+        })
         .catch((error) => commit('connectError', error));
     },
     fetchParamList({ commit }) {
@@ -80,5 +92,6 @@ export default ({ proxyManager, remote }) => ({
       return promise;
     },
     setParameter: wrapMutationAsAction('setParameter'),
+    clearStdout: wrapMutationAsAction('clearStdout'),
   },
 });

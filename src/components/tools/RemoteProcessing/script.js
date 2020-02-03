@@ -17,6 +17,7 @@ export default {
   computed: {
     ...mapState('remote', {
       processing: 'processing',
+      serverStdout: 'serverStdout',
       parameters: (state) => state.paramOrder.map((name) => state.params[name]),
     }),
   },
@@ -61,6 +62,7 @@ export default {
     ...mapActions('remote', {
       fetchParamList: 'fetchParamList',
       runRemoteAlgorithm: 'runRemoteAlgorithm',
+      clearOutput: 'clearStdout',
       setParameter: (dispatch, name, value) => {
         dispatch('setParameter', { name, value });
       },

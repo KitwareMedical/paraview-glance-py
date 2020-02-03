@@ -71,4 +71,13 @@
       {{ error }}
     </v-alert>
   </v-layout>
+  <v-layout wrap align-center class="mt-3">
+    <v-flex xs10><span class="caption">Server output</span></v-flex>
+    <v-flex xs2>
+      <v-btn icon @click="clearOutput"><v-icon>mdi-delete</v-icon></v-btn>
+    </v-flex>
+    <v-flex xs12>
+      <textarea :class="$style.serverOutput">{{ serverStdout }}</textarea>
+    </v-flex>
+  </v-layout>
 </v-container>

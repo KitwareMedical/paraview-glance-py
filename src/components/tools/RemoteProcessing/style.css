@@ -5,3 +5,10 @@
 .container * {
   user-select: none;
 }
+
+.serverOutput {
+  width: 100%;
+  white-space: nowrap;
+  border-radius: 3px;
+  border: 1px solid grey;
+}
