@@ -1,0 +1,125 @@
+# Node.js
+# Build a general Node.js project with npm.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+
+trigger:
+- master
+
+jobs:
+
+- job: 'Linux'
+  pool:
+    vmImage: 'Ubuntu-16.04'
+
+  steps:
+  - script: |
+      sudo apt-get update
+      sudo apt-get install -y python3 python3-dev python3-pip python3-venv
+    displayName: 'Install OS packages'
+
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '10.x'
+    displayName: 'Install Node.js'
+
+  - script: |
+      python3 -m venv ./venv
+      ./venv/bin/python -m pip install --upgrade pip
+      ./venv/bin/python -m pip install --upgrade setuptools
+      ./venv/bin/python -m pip install -r server/requirements.txt
+      ./venv/bin/python -m pip install pyinstaller
+    displayName: 'Install Python build dependencies'
+
+  - script: |
+      npm install
+      npm run build:release
+    displayName: 'npm install and build'
+
+  - script: |
+      source ./venv/bin/activate
+      ./venv/bin/pyinstaller build/paraview-glance-py-onefile.spec
+      cp ./dist/paraview-glance-py ./dist/paraview-glance-py.linux.x86_64
+    displayName: 'Package'
+
+  - task: PublishPipelineArtifact@0
+    inputs:
+      artifactName: 'Linux'
+      targetPath: './dist/paraview-glance-py.linux.x86_64'
+
+- job: 'macOS'
+  pool:
+    vmImage: 'macos-10.13'
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.5'
+      architecture: 'x64'
+
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '10.x'
+    displayName: 'Install Node.js'
+
+  - script: |
+      python3 -m venv ./venv
+      ./venv/bin/python -m pip install --upgrade pip
+      ./venv/bin/python -m pip install --upgrade setuptools
+      ./venv/bin/python -m pip install -r server/requirements.txt
+      ./venv/bin/python -m pip install pyinstaller
+    displayName: 'Install Python build dependencies'
+
+  - script: |
+      npm install
+      npm run build:release
+    displayName: 'npm install and build'
+
+  - script: |
+      source ./venv/bin/activate
+      ./venv/bin/pyinstaller build/paraview-glance-py-onefile.spec
+      cp ./dist/paraview-glance-py ./dist/paraview-glance-py.macos.x86_64
+    displayName: 'Package'
+
+  - task: PublishPipelineArtifact@0
+    inputs:
+      artifactName: 'MacOS'
+      targetPath: './dist/paraview-glance-py.macos.x86_64'
+
+- job: 'Windows'
+  pool:
+    vmImage: 'vs2017-win2016'
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.7'
+      architecture: 'x64'
+
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '10.x'
+    displayName: 'Install Node.js'
+
+  - script: |
+      python -m pip install --upgrade pip
+      python -m pip install --upgrade setuptools
+      python -m pip install -r server/requirements.txt
+      python -m pip install pyinstaller
+      python -m pip install pywin32
+    displayName: 'Install Python build dependencies'
+
+  - bash: |
+      npm install
+      npm run build:release
+    displayName: 'npm install and build'
+
+  - bash: |
+      pyinstaller build/paraview-glance-py-onefile.spec
+      cp ./dist/paraview-glance-py.exe ./dist/paraview-glance-py.windows.x86_64.exe
+    displayName: 'Package'
+
+  - task: PublishPipelineArtifact@0
+    inputs:
+      artifactName: 'Windows'
+      targetPath: './dist/paraview-glance-py.windows.x86_64.exe'

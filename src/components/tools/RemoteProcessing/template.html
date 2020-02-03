@@ -1,83 +1,89 @@
 <v-container :class="$style.container">
-  <v-layout
-    v-for="param in parameters"
-    :key="param.name"
-    wrap
-    align-center
-  >
-    <template v-if="param.type === 'source'">
+  <v-layout v-if="!connected">
+    <v-flex xs12><span class="text-center subtitle-2">Not connected. Maybe refresh?</span></v-flex>
+  </v-layout>
+
+  <template v-else>
+    <v-layout
+      v-for="param in parameters"
+      :key="param.name"
+      wrap
+      align-center
+    >
+      <template v-if="param.type === 'source'">
+        <v-flex xs12>
+          <source-select
+            :label="param.label"
+            :value="param.value"
+            @input="setParameter(param.name, $event)"
+          />
+        </v-flex>
+      </template>
+
+      <template v-else-if="param.type === 'range'">
+        <v-flex xs3 class="caption teal--text lighten-3">
+          {{ param.label || param.name }}
+        </v-flex>
+        <v-flex xs6>
+          <v-slider
+            hide-details
+            :min="param.range[0]"
+            :max="param.range[1]"
+            :step="param.step"
+            :value="param.value"
+            @input="setParameter(param.name, $event)"
+          />
+        </v-flex>
+        <v-flex xs3>
+          <v-text-field
+            hide-details
+            :value="param.value"
+            @input="setParameter(param.name, $event)"
+          />
+        </v-flex>
+      </template>
+
+      <template v-if="param.type === 'bool'">
+        <v-flex xs3 class="caption teal--text lighten-3">
+          {{ param.label || param.name }}
+        </v-flex>
+        <v-flex xs9>
+          <v-checkbox
+            :input-value="param.value"
+            @change="setParameter(param.name, $event)"
+          />
+        </v-flex>
+      </template>
+    </v-layout>
+    <v-layout align-center class="justify-center">
+      <v-btn
+        color="primary"
+        :loading="processing"
+        :disabled="processing"
+        @click="run"
+      >
+        Run
+      </v-btn>
+    </v-layout>
+    <v-layout align-center class="justify-center mt-3">
+      <v-alert
+        v-show="!!error"
+        type="error"
+        dismissible
+        close-text="Close"
+        @input="error = ''"
+      >
+        {{ error }}
+      </v-alert>
+    </v-layout>
+    <v-layout wrap align-center class="mt-3">
+      <v-flex xs10><span class="caption">Server output</span></v-flex>
+      <v-flex xs2>
+        <v-btn icon @click="clearOutput"><v-icon>mdi-delete</v-icon></v-btn>
+      </v-flex>
       <v-flex xs12>
-        <source-select
-          :label="param.label"
-          :value="param.value"
-          @input="setParameter(param.name, $event)"
-        />
+        <textarea disabled :class="$style.serverOutput">{{ serverStdout }}</textarea>
       </v-flex>
-    </template>
-
-    <template v-else-if="param.type === 'range'">
-      <v-flex xs3 class="caption teal--text lighten-3">
-        {{ param.label || param.name }}
-      </v-flex>
-      <v-flex xs6>
-        <v-slider
-          hide-details
-          :min="param.range[0]"
-          :max="param.range[1]"
-          :step="param.step"
-          :value="param.value"
-          @input="setParameter(param.name, $event)"
-        />
-      </v-flex>
-      <v-flex xs3>
-        <v-text-field
-          hide-details
-          :value="param.value"
-          @input="setParameter(param.name, $event)"
-        />
-      </v-flex>
-    </template>
-
-    <template v-if="param.type === 'bool'">
-      <v-flex xs3 class="caption teal--text lighten-3">
-        {{ param.label || param.name }}
-      </v-flex>
-      <v-flex xs9>
-        <v-checkbox
-          :input-value="param.value"
-          @change="setParameter(param.name, $event)"
-        />
-      </v-flex>
-    </template>
-  </v-layout>
-  <v-layout align-center class="justify-center">
-    <v-btn
-      color="primary"
-      :loading="processing"
-      :disabled="processing"
-      @click="run"
-    >
-      Run
-    </v-btn>
-  </v-layout>
-  <v-layout align-center class="justify-center mt-3">
-    <v-alert
-      v-show="!!error"
-      type="error"
-      dismissible
-      close-text="Close"
-      @input="error = ''"
-    >
-      {{ error }}
-    </v-alert>
-  </v-layout>
-  <v-layout wrap align-center class="mt-3">
-    <v-flex xs10><span class="caption">Server output</span></v-flex>
-    <v-flex xs2>
-      <v-btn icon @click="clearOutput"><v-icon>mdi-delete</v-icon></v-btn>
-    </v-flex>
-    <v-flex xs12>
-      <textarea :class="$style.serverOutput">{{ serverStdout }}</textarea>
-    </v-flex>
-  </v-layout>
+    </v-layout>
+  </template>
 </v-container>
