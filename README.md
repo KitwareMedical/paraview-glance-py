@@ -1,7 +1,7 @@
 paraview-glance-py
 ==============
 
-[![Build Status](https://dev.azure.com/glance-vessels/glance-vessels/_apis/build/status/KitwareMedical.glance-vessels?branchName=master)](https://dev.azure.com/glance-vessels/glance-vessels/_build/latest?definitionId=1&branchName=master)
+[![Build Status](https://dev.azure.com/glance-vessels/paraview-glance-py/_apis/build/status/KitwareMedical.paraview-glance-py?branchName=master)](https://dev.azure.com/glance-vessels/paraview-glance-py/_build/latest?definitionId=2&branchName=master)
 
 This is built off of ParaView Glance.
 
