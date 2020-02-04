@@ -75,6 +75,7 @@ function Remote() {
   this.session = null;
   this.priv = {
     readyCallbacks: [],
+    closeCallbacks: [],
     errorCallbacks: [],
     deferredWaitlist: new Map(),
   };
@@ -136,6 +137,11 @@ Remote.prototype.connect = function connect(endpoint) {
         resolve(this.session);
       });
 
+      this.ws.onConnectionClose(() => {
+        this.connected = false;
+        this.priv.closeCallbacks.forEach((cb) => cb());
+      });
+
       this.ws.onConnectionError(() => {
         const error = new Error(`Connection to ${endpoint} failed`);
         this.priv.errorCallbacks.forEach((cb) => cb(error));
@@ -150,7 +156,7 @@ Remote.prototype.connect = function connect(endpoint) {
 Remote.prototype.call = function call(rpcEndpoint, ...args) {
   return new Promise((resolve, reject) => {
     if (this.closed || !this.connected) {
-      throw new Error('Connetion is closed or not connected');
+      throw new Error('Connection is closed or not connected');
     }
 
     const preparedArgs = args.map((arg) => {
@@ -177,6 +183,10 @@ Remote.prototype.call = function call(rpcEndpoint, ...args) {
 
 Remote.prototype.onReady = function onReady(cb) {
   addCallback(this.priv.readyCallbacks, cb);
+};
+
+Remote.prototype.onClose = function onClose(cb) {
+  addCallback(this.priv.closeCallbacks, cb);
 };
 
 Remote.prototype.onError = function onError(cb) {

@@ -23,7 +23,9 @@ export default {
     }),
   },
   mounted() {
-    this.fetchParamList();
+    this.fetchParamList().catch(() => {
+      this.error = 'Failed to fetch parameter list';
+    });
   },
   methods: {
     run() {
