@@ -22,6 +22,9 @@ export default ({ proxyManager, remote }) => ({
     connected(state) {
       state.connected = true;
     },
+    disconnected(state) {
+      state.connected = false;
+    },
     connectError(state, error) {
       state.connectError = error;
     },
@@ -50,6 +53,8 @@ export default ({ proxyManager, remote }) => ({
 
   actions: {
     connect({ commit }, endpoint) {
+      remote.onClose(() => commit('disconnected'));
+
       return remote
         .connect(endpoint)
         .then(() => {

@@ -1,6 +1,10 @@
 <v-container :class="$style.container">
   <v-layout v-if="!connected">
-    <v-flex xs12><span class="text-center subtitle-2">Not connected. Maybe refresh?</span></v-flex>
+    <v-flex xs12>
+      <v-alert type="warning">
+        Not connected. Try refreshing or restarting the server+application.
+      </v-alert>
+    </v-flex>
   </v-layout>
 
   <template v-else>
