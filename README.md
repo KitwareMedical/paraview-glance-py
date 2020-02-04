@@ -12,9 +12,9 @@ Download the stand-alone executable:
 
 | Operating System | Executable |
 | ------------- |:-------------:|
-| Linux | [glance-vessels.linux.x86_64](https://github.com/KitwareMedical/glance-vessels/releases/download/latest/glance-vessels.linux.x86_64) |
-| macOS | [glance-vessels.macos.x86_64](https://github.com/KitwareMedical/glance-vessels/releases/download/latest/glance-vessels.macos.x86_64) |
-| Windows | [glance-vessels.windows.x86_64.exe](https://github.com/KitwareMedical/glance-vessels/releases/download/latest/glance-vessels.windows.x86_64.exe) |
+| Linux | [paraview-glance-py.linux.x86_64](https://github.com/KitwareMedical/paraview-glance-py/releases/download/latest/paraview-glance-py.linux.x86_64) |
+| macOS | [paraview-glance-py.macos.x86_64](https://github.com/KitwareMedical/paraview-glance-py/releases/download/latest/paraview-glance-py.macos.x86_64) |
+| Windows | [paraview-glance-py.windows.x86_64.exe](https://github.com/KitwareMedical/paraview-glance-py/releases/download/latest/paraview-glance-py.windows.x86_64.exe) |
 
 Usage
 -----
