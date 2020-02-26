@@ -83,11 +83,11 @@ $ npm run dev
 In another terminal, run the server.
 ```
 $ cd paraview-glance-py/server
-$ python server.py --port 8888 --no-browser
+$ python server.py --port 8181 --no-browser
 ```
 
 After the python server starts up, visit
-`http://localhost:9999/?wsServer=http://localhost:8888/ws` to view the webapp.
+`http://localhost:9999/?wsServer=ws://localhost:8181/ws` to view the webapp.
 If you get a blank screen, try clearing cache and then refreshing.
 
 
