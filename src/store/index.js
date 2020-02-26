@@ -69,6 +69,8 @@ function createStore(services) {
       panels: {},
       cameraViewPoints: {},
       mostRecentViewPoint: null,
+      collapseDatasetPanels: false,
+      suppressBrowserWarning: false,
     },
     getters: {
       proxyManager(state) {
@@ -117,10 +119,18 @@ function createStore(services) {
       mostRecentViewPoint(state, viewPoint) {
         state.mostRecentViewPoint = viewPoint;
       },
+      collapseDatasetPanels(state, value) {
+        state.collapseDatasetPanels = value;
+      },
+      suppressBrowserWarning(state, value) {
+        state.suppressBrowserWarning = value;
+      },
     },
     actions: {
       addPanel: wrapMutationAsAction('addPanel'),
       closeScreenshotDialog: wrapMutationAsAction('closeScreenshotDialog'),
+      collapseDatasetPanels: wrapMutationAsAction('collapseDatasetPanels'),
+      suppressBrowserWarning: wrapMutationAsAction('suppressBrowserWarning'),
       saveState({ commit, state }, fileNameToUse) {
         const t = new Date();
         const fileName =
