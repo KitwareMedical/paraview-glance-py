@@ -8,7 +8,7 @@ from wslink.websocket import ServerProtocol
 from wslink import server
 from twisted.internet import reactor
 
-from hello_world import AlgorithmApi
+from vessels import AlgorithmApi
 
 def get_port():
     '''Don't care about race condition here for getting a free port.'''
