@@ -1,0 +1,99 @@
+<v-container :class="$style.container">
+  <v-row no-gutters>
+    <v-col>
+      <source-select
+        label="Select input image"
+        :filterFunc="filterImageData"
+        @input="setInputImage"
+      />
+    </v-col>
+  </v-row>
+
+  <v-expansion-panels>
+    <v-expansion-panel>
+      <v-expansion-panel-header>
+        <v-row no-gutters class="align-center">
+          <v-col cols="3" @click.stop>
+            <v-switch
+              v-model="enabled.windowLevel"
+              :class="$style.vuetifyInput"
+              hide-details
+            />
+          </v-col>
+          <v-col cols="9">
+            <div :class="$style.headerTitle">Window/Level</div>
+          </v-col>
+        </v-row>
+      </v-expansion-panel-header>
+      <v-expansion-panel-content>
+        Applies current window/level to preprocessed image.
+      </v-expansion-panel-content>
+    </v-expansion-panel>
+  </v-expansion-panels>
+
+  <v-expansion-panels>
+    <v-expansion-panel>
+      <v-expansion-panel-header>
+        <v-row no-gutters class="align-center">
+          <v-col cols="3" @click.stop>
+            <v-switch
+              v-model="enabled.median"
+              :class="$style.vuetifyInput"
+              hide-details
+            />
+          </v-col>
+          <v-col cols="9">
+            <div :class="$style.headerTitle">Median Filter</div>
+          </v-col>
+        </v-row>
+      </v-expansion-panel-header>
+      <v-expansion-panel-content>
+        <v-container>
+          <v-row no-gutters>
+            <v-col>
+              <v-slider
+                v-model="params.median.radius"
+                min="1"
+                max="10"
+                step="1"
+                label="Radius"
+                class="align-center"
+                always-dirty
+                hide-details
+              >
+                <template v-slot:append>
+                  <v-text-field
+                    type="number"
+                    min="1"
+                    max="15"
+                    step="1"
+                    hide-details
+                    single-line
+                    class="mt-0 pt-0"
+                    :value="params.median.radius"
+                    @input="params.median.radius = Number($event)"
+                  />
+                </template>
+              </v-slider>
+            </v-col>
+          </v-row>
+        </v-container>
+      </v-expansion-panel-content>
+    </v-expansion-panel>
+  </v-expansion-panels>
+
+  <v-container>
+    <v-row no-gutters>
+      <v-col class="text-center">
+        <v-btn
+          @click="runFilters"
+          :disabled="!inputSource || !canRunFilters"
+          :loading="loading"
+          color="primary"
+        >
+          Run filters
+        </v-btn>
+      </v-col>
+    </v-row>
+  </v-container>
+</v-container>

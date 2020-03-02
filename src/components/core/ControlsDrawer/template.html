@@ -2,10 +2,13 @@
   v-model="activeTab"
   centered
   grow
+  show-arrows
   :class="$style.tabsContainer"
 >
   <v-tab>Datasets</v-tab>
-  <v-tab>Tools</v-tab>
+  <template v-for="tab in WorkflowTabs">
+    <v-tab :key="tab.name">{{ tab.name }}</v-tab>
+  </template>
   <v-tab>Global</v-tab>
   <v-tabs-items
     v-model="activeTab"
@@ -15,8 +18,38 @@
     <v-tab-item :class="$style.tabItem">
       <datasets />
     </v-tab-item>
-    <v-tab-item :class="$style.tabItem">
-      <edit-tools />
+    <v-tab-item
+      v-for="(tab, idx) in WorkflowTabs"
+      :key="tab.name"
+      :class="$style.tabItem"
+    >
+      <v-container class="mt-3">
+        <v-row no-gutters>
+          <v-col cols="6" class="text-right">
+            <v-btn
+              small
+              text
+              :disabled="idx === 0"
+              @click="activeTab--"
+            >
+              <v-icon>mdi-menu-left</v-icon>
+              Prev
+            </v-btn>
+          </v-col>
+          <v-col cols="6">
+             <v-btn
+              small
+              text
+              :disabled="idx === WorkflowTabs.length - 1"
+              @click="activeTab++"
+            >
+              Next
+              <v-icon>mdi-menu-right</v-icon>
+            </v-btn>
+         </v-col>
+        </v-row>
+      </v-container>
+      <v-component :is="tab.component" :class="$style.tabComponent" />
     </v-tab-item>
     <v-tab-item :class="$style.tabItem">
       <global-settings />

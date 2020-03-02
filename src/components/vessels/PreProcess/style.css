@@ -1,0 +1,15 @@
+.container {
+  height: 100%;
+  padding: 8px;
+}
+
+/* overrides for vuetify input controls */
+.vuetifyInput {
+  margin-top: 0;
+}
+
+.headerTitle {
+  /* match v-switch padding-top */
+  padding-top: 4px;
+  font-weight: 500;
+}
