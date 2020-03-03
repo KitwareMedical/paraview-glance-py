@@ -1,0 +1,103 @@
+<v-container :class="$style.container">
+  <v-row no-gutters>
+    <v-col>
+      <source-select
+        label="Select Extraction Image"
+        :filterFunc="filterImageData"
+        @input="setExtractionImage"
+      />
+    </v-col>
+  </v-row>
+  <v-row no-gutters>
+    <v-col>
+      <v-switch
+        v-model="enabled"
+        label="Extract"
+        :disabled="!extractionSource"
+      />
+    </v-col>
+  </v-row>
+  <v-row no-gutters class="mb-4">
+    <v-col cols="8">
+      <v-select
+        v-model="tubeScale"
+        label="Tube Scale"
+        :items="TubeSizes"
+        item-text="size"
+        item-value="size"
+        return-object
+        hide-details
+      />
+    </v-col>
+    <v-col cols="4">
+      <v-checkbox
+        v-model="dynamicScale"
+        label="Dynamic"
+        hide-details
+        class="ml-2"
+      />
+    </v-col>
+  </v-row>
+  <template v-if="tubeScale.size === 'Custom'">
+    <v-row no-gutters>
+      <v-col>
+        <v-slider
+          v-model="ridgeScale"
+          min="1"
+          max="10"
+          step="0.1"
+          label="Ridge"
+          always-dirty
+          hide-details
+        >
+          <template v-slot:append>
+            <v-text-field
+              v-model="ridgeScale"
+              type="number"
+              min="1"
+              max="10"
+              step="0.1"
+              hide-details
+              single-line
+              class="mt-0 pt-0"
+            />
+          </template>
+        </v-slider>
+      </v-col>
+    </v-row>
+    <v-row no-gutters>
+      <v-col>
+        <v-slider
+          v-model="radiusScale"
+          min="1"
+          max="10"
+          step="0.1"
+          label="Radius"
+          always-dirty
+          hide-details
+        >
+          <template v-slot:append>
+            <v-text-field
+              v-model="radiusScale"
+              type="number"
+              min="1"
+              max="10"
+              step="0.1"
+              hide-details
+              single-line
+              class="mt-0 pt-0"
+            />
+          </template>
+        </v-slider>
+      </v-col>
+    </v-row>
+  </template>
+  <v-row no-gutters>
+    <span class="body-2">Status: </span>
+    <span>{{ pendingSegs > 0 ? `${pendingSegs} processing...` : "Ready" }}</span>
+  </v-row>
+  <v-row no-gutters>
+    <span class="body-2">Tube count: </span>
+    <span>{{ numberOfTubes }}</span>
+  </v-row>
+</v-container>
