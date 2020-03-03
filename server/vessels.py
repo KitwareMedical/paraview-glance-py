@@ -1,10 +1,12 @@
 import sys
-
 import itk
 import random
 import numpy as np
 
 from helper import Api, rpc, forward_stdout
+
+# preload TubeTK symbols
+itk.TubeTK.SegmentTubes
 
 def generate_tube_colormap(group):
     colormap = {}
@@ -89,14 +91,15 @@ class AlgorithmApi(Api):
         if image != self.input_image:
             self.input_image = image
             self.segmenter = itk.TubeTK.SegmentTubes[type(image)].New()
-            self.segmenter.SetInputImage(image)
+            self.segmenter.SetInput(image)
+            self.segmenter.SetVerbose(True)
 
     @rpc('segment')
     def segment(self, position, scale):
         if self.segmenter is None:
             raise Exception('segment image is not set')
 
-        tube = self.segmenter.ExtractTube(position, self.next_tube_id, True)
+        tube = self.segmenter.ExtractTubeInObjectSpace(position, self.next_tube_id)
         if tube is not None:
             self.segmenter.AddTube(tube)
             self.tube_id_mapping[tube.GetId()] = tube
