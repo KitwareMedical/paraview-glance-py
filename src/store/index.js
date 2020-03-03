@@ -12,6 +12,7 @@ import files from 'paraview-glance/src/store/fileLoader';
 import views from 'paraview-glance/src/store/views';
 import widgets from 'paraview-glance/src/store/widgets';
 import remote from 'paraview-glance/src/store/remote';
+import vessels from 'paraview-glance/src/store/vessels';
 
 import { wrapMutationAsAction } from 'paraview-glance/src/utils';
 
@@ -88,6 +89,7 @@ function createStore(services) {
       views: views(services),
       widgets: widgets(services),
       remote: remote(services),
+      vessels: vessels(services),
     },
     mutations: {
       showLanding(state) {

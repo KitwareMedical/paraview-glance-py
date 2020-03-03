@@ -19,6 +19,8 @@ import vtkPaintWidget from 'vtk.js/Sources/Widgets/Widgets3D/PaintWidget';
 import vtkLabelMapVolumeRepProxy from 'paraview-glance/src/vtk/LabelMapVolumeRepProxy';
 import vtkLabelMapSliceRepProxy from 'paraview-glance/src/vtk/LabelMapSliceRepProxy';
 import vtkWidgetProxy from 'paraview-glance/src/vtk/WidgetProxy';
+import vtkTubeGroupPolyDataRepresentationProxy from 'paraview-glance/src/vtk/TubeGroupPolyDataRepresentationProxy';
+import vtkTubeGroupLabelMapRepresentationProxy from 'paraview-glance/src/vtk/TubeGroupLabelMapRepresentationProxy';
 
 import ConfigUtils from 'paraview-glance/src/config/configUtils';
 
@@ -217,6 +219,48 @@ export default {
           },
         ] // links
       ),
+      TubeGroupPolyData: createProxyDefinition(
+        vtkTubeGroupPolyDataRepresentationProxy
+      ),
+      TubeGroupLabelMap: createProxyDefinition(
+        vtkTubeGroupLabelMapRepresentationProxy
+      ),
+      TubeGroupLabelMapX: createProxyDefinition(
+        vtkTubeGroupLabelMapRepresentationProxy,
+        [],
+        [
+          {
+            link: 'SliceX',
+            property: 'slice',
+            updateOnBind: true,
+            type: 'application',
+          },
+        ]
+      ),
+      TubeGroupLabelMapY: createProxyDefinition(
+        vtkTubeGroupLabelMapRepresentationProxy,
+        [],
+        [
+          {
+            link: 'SliceY',
+            property: 'slice',
+            updateOnBind: true,
+            type: 'application',
+          },
+        ]
+      ),
+      TubeGroupLabelMapZ: createProxyDefinition(
+        vtkTubeGroupLabelMapRepresentationProxy,
+        [],
+        [
+          {
+            link: 'SliceZ',
+            property: 'slice',
+            updateOnBind: true,
+            type: 'application',
+          },
+        ]
+      ),
     },
     Views: {
       View3D: createDefaultView(vtkView, proxyUI.View3D),
@@ -233,16 +277,19 @@ export default {
       ...proxyViewRepresentationMapping.View2D,
       vtkImageData: { name: 'SliceX' },
       vtkLabelMap: { name: 'LabelMapSliceX' },
+      vtkTubeGroup: { name: 'TubeGroupLabelMapX' },
     },
     View2D_Y: {
       ...proxyViewRepresentationMapping.View2D,
       vtkImageData: { name: 'SliceY' },
       vtkLabelMap: { name: 'LabelMapSliceY' },
+      vtkTubeGroup: { name: 'TubeGroupLabelMapY' },
     },
     View2D_Z: {
       ...proxyViewRepresentationMapping.View2D,
       vtkImageData: { name: 'SliceZ' },
       vtkLabelMap: { name: 'LabelMapSliceZ' },
+      vtkTubeGroup: { name: 'TubeGroupLabelMapZ' },
     },
   },
   filters: {
